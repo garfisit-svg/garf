@@ -1,0 +1,46 @@
+
+export type UserRole = 'user' | 'owner' | 'guest';
+
+export interface TimeSlot {
+  id: string;
+  time: string;
+  price: number;
+  available: boolean;
+}
+
+export interface Accessory {
+  id: string;
+  name: string;
+  type: 'PC' | 'CONSOLE' | 'SIMULATOR';
+  slots: TimeSlot[];
+}
+
+export interface Hub {
+  id: string;
+  name: string;
+  type: 'TURF' | 'GAMING CAFE';
+  location: string;
+  rating: number;
+  image: string;
+  priceStart: number;
+  description: string;
+  amenities: string[];
+  slots: TimeSlot[]; // For Turfs
+  accessories?: Accessory[]; // For Gaming Cafes
+  isBestSeller?: boolean;
+}
+
+export interface Booking {
+  id: string;
+  hubId: string;
+  hubName: string;
+  slotId: string;
+  slotTime: string;
+  userId: string;
+  userName: string;
+  date: string;
+  createdAt: number; // timestamp
+  status: 'confirmed' | 'pending' | 'expired';
+  paymentMethod: 'online' | 'cash';
+  accessoryName?: string;
+}
