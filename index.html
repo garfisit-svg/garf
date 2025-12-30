@@ -27,6 +27,11 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #334155;
     }
+    
+    /* Ensure marquee container doesn't cause overflow-x on body */
+    body {
+      overflow-x: hidden;
+    }
   </style>
 <script type="importmap">
 {
@@ -40,5 +45,7 @@
 </head>
 <body>
   <div id="root"></div>
+  <!-- Essential for Vite/Vercel to load the app -->
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>

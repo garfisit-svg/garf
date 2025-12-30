@@ -20,11 +20,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
     return matchesSearch;
   });
 
-  // Doubling the arrays for seamless infinite scroll animation
+  // Tripling the arrays ensures enough content for a seamless infinite loop regardless of screen width
   const scrollingHubs = [...filteredHubs, ...filteredHubs, ...filteredHubs];
+  
   const scrollingBuzz = [
     { title: 'WEEKEND PLANS', content: 'Book group sessions for elite Saturday/Sunday matches.', color: 'border-blue-500/40' },
-    { title: 'GO DIGITAL', content: 'Pay online for instant check-ins and priority queue access.', color: 'border-purple-500/40' },
+    { title: 'GO DIGITAL', content: 'Pay online for instant check-ins and priority queue access.', color: 'border-purple-500/40 bg-purple-900/10' },
     { title: 'NIGHT OWL', content: 'Select cafes stay open till 4 AM for hardcore grinders.', color: 'border-slate-800' },
     { title: 'WEEKLY CLASH', content: 'Join local tournaments and win premium gear every week.', color: 'border-emerald-500/40' },
   ];
@@ -74,7 +75,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
         </section>
 
         {/* Top Tier Arenas - Infinite Continuous Scroll */}
-        <section className="mb-20">
+        <section className="mb-20 overflow-hidden">
           <div className="px-6 flex items-center gap-4 mb-8">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-8 bg-[#10b981] rounded-full"></div>
@@ -83,20 +84,19 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
             <span className="bg-slate-800 text-slate-400 text-[10px] font-black px-3 py-1 rounded uppercase tracking-[0.2em]">Community Favs</span>
           </div>
 
-          <div className="relative w-full overflow-hidden group">
-            {/* The Infinite Container */}
+          <div className="relative w-full">
             <div className="flex gap-8 animate-marquee whitespace-nowrap pause-on-hover">
               {scrollingHubs.map((hub, idx) => (
                 <div 
                   key={`${hub.id}-${idx}`}
                   onClick={() => onHubSelect(hub)}
-                  className="flex-shrink-0 w-[420px] bg-[#0b1120] border border-slate-800 rounded-[32px] overflow-hidden cursor-pointer group transition-all hover:border-[#10b981]/50 shadow-xl inline-block align-top"
+                  className="flex-shrink-0 w-[420px] bg-[#0b1120] border border-slate-800 rounded-[40px] overflow-hidden cursor-pointer group transition-all hover:border-[#10b981]/50 shadow-xl inline-block align-top"
                 >
-                  <div className="h-60 relative overflow-hidden">
+                  <div className="h-64 relative overflow-hidden">
                     <img src={hub.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt="" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120]/80 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] to-transparent opacity-40"></div>
                     <div className="absolute top-4 right-4">
-                      <div className="bg-[#10b981]/80 backdrop-blur-md text-[#020617] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-400/30 shadow-lg">
+                      <div className="bg-[#10b981]/80 backdrop-blur-md text-[#020617] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-400/30">
                         RATED {hub.rating}
                       </div>
                     </div>
@@ -104,7 +104,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
                   <div className="p-8">
                     <div className="flex justify-between items-start mb-2">
                        <h4 className="text-2xl font-black text-white uppercase tracking-tight truncate max-w-[70%]">{hub.name}</h4>
-                       <div className="flex items-center gap-1.5 text-yellow-500 text-sm font-black bg-yellow-500/10 px-3 py-1 rounded-full">
+                       <div className="flex items-center gap-1.5 text-yellow-500 text-sm font-black">
                          <StarIcon className="w-4 h-4" /> {hub.rating}
                        </div>
                     </div>
@@ -126,14 +126,14 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
               ))}
             </div>
             
-            {/* Gradient Mask for fading sides */}
-            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            {/* Gradient Masks */}
+            <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
           </div>
         </section>
 
         {/* Garf Buzz - Info Line Infinite Continuous Scroll */}
-        <section className="mb-20">
+        <section className="mb-20 overflow-hidden">
           <div className="px-6 flex items-center gap-4 mb-8">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-8 bg-purple-600 rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]"></div>
@@ -142,12 +142,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
             <span className="bg-purple-900/30 text-purple-400 text-[10px] font-black px-3 py-1 rounded border border-purple-500/20 uppercase tracking-[0.2em]">Ads & Lines</span>
           </div>
 
-          <div className="relative w-full overflow-hidden">
+          <div className="relative w-full">
             <div className="flex gap-6 animate-marquee-reverse pause-on-hover">
               {fullScrollingBuzz.map((buzz, idx) => (
                 <div 
                   key={idx}
-                  className={`flex-shrink-0 w-[480px] p-10 rounded-[40px] border ${buzz.color} bg-[#0b1120]/40 backdrop-blur-sm relative overflow-hidden group hover:scale-[1.02] transition-all cursor-pointer`}
+                  className={`flex-shrink-0 w-[480px] p-10 rounded-[40px] border ${buzz.color} backdrop-blur-sm relative overflow-hidden group hover:scale-[1.02] transition-all cursor-pointer`}
                 >
                   <div className="flex items-center justify-between mb-6">
                     <div className="space-y-1">
@@ -160,9 +160,9 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
                 </div>
               ))}
             </div>
-            {/* Gradient Mask */}
-            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            {/* Gradient Masks */}
+            <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
           </div>
         </section>
 
@@ -203,20 +203,20 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
 
         @keyframes marquee {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(calc(-33.333% - 1.333rem)); }
         }
 
         @keyframes marquee-reverse {
-          0% { transform: translateX(-50%); }
+          0% { transform: translateX(calc(-33.333% - 1rem)); }
           100% { transform: translateX(0); }
         }
 
         .animate-marquee {
-          animation: marquee 40s linear infinite;
+          animation: marquee 60s linear infinite;
         }
 
         .animate-marquee-reverse {
-          animation: marquee-reverse 35s linear infinite;
+          animation: marquee-reverse 50s linear infinite;
         }
 
         .pause-on-hover:hover {
