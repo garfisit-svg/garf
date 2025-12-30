@@ -23,7 +23,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
   // Items for Marquees (multiplied for seamless loop)
   const bestSellers = MOCK_HUBS.filter(h => h.isBestSeller || h.rating >= 4.7);
   const marqueeHubs = [...bestSellers, ...bestSellers, ...bestSellers, ...bestSellers];
-  
   const marqueeBuzz = [...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ];
 
   return (
@@ -37,10 +36,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
             <div className="absolute inset-0 z-0">
               <img 
                 src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2000" 
-                className="w-full h-full object-cover brightness-[0.12] blur-[2px]" 
+                className="w-full h-full object-cover brightness-[0.12] blur-[1px]" 
                 alt="" 
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/90 via-transparent to-[#020617]"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/95 via-transparent to-[#020617]"></div>
             </div>
 
             <div className="relative z-10 space-y-6 w-full max-w-4xl">
@@ -72,54 +71,59 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
         </section>
 
         {/* 2. Top Tier Marquee - Slightly Rectangles, Continuously Moving */}
-        <section className="mb-12 overflow-hidden">
+        <section className="mb-14 relative group">
           <div className="px-6 flex items-center gap-3 mb-6">
-            <div className="w-1.5 h-6 bg-[#10b981] rounded-full"></div>
+            <div className="w-1.5 h-6 bg-[#10b981] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
             <h2 className="text-xl font-black uppercase tracking-tight text-white">Top Tier Arenas</h2>
-            <span className="bg-slate-800 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest ml-2">Recommended</span>
+            <div className="h-px flex-1 bg-slate-800/50 ml-4"></div>
           </div>
 
-          <div className="relative">
-            <div className="flex gap-6 animate-marquee">
+          <div className="relative overflow-hidden w-full h-[180px]">
+            {/* Gradient Masks for seamless entry/exit */}
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            
+            <div className="flex gap-6 animate-marquee w-max py-2">
               {marqueeHubs.map((hub, idx) => (
                 <div 
                   key={`${hub.id}-${idx}`}
                   onClick={() => onHubSelect(hub)}
-                  className="flex-shrink-0 w-[320px] h-[180px] bg-[#0b1120] border border-slate-800 rounded-3xl overflow-hidden cursor-pointer group transition-all hover:border-[#10b981]/50 relative shadow-xl"
+                  className="flex-shrink-0 w-[300px] h-[160px] bg-[#0b1120] border border-slate-800 rounded-3xl overflow-hidden cursor-pointer group transition-all hover:border-[#10b981]/50 relative shadow-xl hover:-translate-y-1"
                 >
                   <img src={hub.image} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700" alt="" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/10 to-transparent"></div>
                   <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end">
                     <div>
-                      <h4 className="text-lg font-black text-white uppercase tracking-tight truncate max-w-[180px]">{hub.name}</h4>
+                      <h4 className="text-lg font-black text-white uppercase tracking-tight truncate max-w-[170px]">{hub.name}</h4>
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{hub.location}</p>
                     </div>
-                    <div className="bg-[#10b981] text-[#020617] text-[10px] font-black px-2.5 py-1 rounded-lg">
+                    <div className="bg-[#10b981]/10 backdrop-blur-md text-[#10b981] text-[10px] font-black px-2.5 py-1 rounded-lg border border-[#10b981]/20">
                       {hub.rating} ★
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            {/* Gradient Mask */}
-            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
           </div>
         </section>
 
         {/* 3. Garf Buzz Marquee - Smaller, Continuously Moving */}
-        <section className="mb-20 overflow-hidden">
+        <section className="mb-24 relative overflow-hidden">
           <div className="px-6 flex items-center gap-3 mb-6">
-            <div className="w-1.5 h-6 bg-purple-600 rounded-full"></div>
+            <div className="w-1.5 h-6 bg-purple-600 rounded-full shadow-[0_0_10px_rgba(147,51,234,0.5)]"></div>
             <h2 className="text-xl font-black uppercase tracking-tight text-white">Garf Buzz</h2>
           </div>
 
-          <div className="relative">
-            <div className="flex gap-4 animate-marquee-reverse">
+          <div className="relative h-[120px] w-full">
+            {/* Gradient Masks */}
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
+            
+            <div className="flex gap-4 animate-marquee-reverse w-max py-2">
               {marqueeBuzz.map((buzz, idx) => (
                 <div 
                   key={idx}
-                  className="flex-shrink-0 w-[240px] p-5 rounded-2xl border border-purple-500/20 bg-purple-900/10 backdrop-blur-sm group hover:border-purple-500/50 transition-colors"
+                  className="flex-shrink-0 w-[240px] h-[90px] p-5 rounded-2xl border border-purple-500/10 bg-purple-900/5 backdrop-blur-sm group hover:border-purple-500/40 transition-all cursor-default"
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></span>
@@ -198,17 +202,19 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
         }
 
         .animate-marquee {
-          animation: marquee 30s linear infinite;
-          width: max-content;
+          animation: marquee 40s linear infinite;
         }
 
         .animate-marquee-reverse {
-          animation: marquee 40s linear infinite reverse;
-          width: max-content;
+          animation: marquee 50s linear infinite reverse;
         }
 
         .animate-marquee:hover, .animate-marquee-reverse:hover {
           animation-play-state: paused;
+        }
+
+        .w-max {
+          width: max-content;
         }
       `}</style>
     </div>

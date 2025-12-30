@@ -101,8 +101,8 @@ export const MOCK_BOOKINGS: Booking[] = [
 ];
 
 export const GARF_BUZZ = [
-  { id: 1, title: 'CASHLESS PAYMENTS', content: 'Fast, secure, and lightning-quick digital checkouts for every hub.', tag: 'DIGITAL' },
-  { id: 2, title: 'GAMING MADE EASY', content: 'Experience hassle-free one-tap slot bookings for your favorite setups.', tag: 'SMOOTH' },
-  { id: 3, title: 'EASY ACCESS', content: 'Find premium turfs and cafes nearby and book your slot in seconds.', tag: 'ACCESS' },
-  { id: 4, title: 'INSTANT CONFIRMATION', content: 'Get real-time updates and secure your sessions with zero wait time.', tag: 'FAST' },
+  { id: 1, title: 'CASHLESS PAYMENTS', content: 'Swift digital checkouts for seamless booking flow.', tag: 'DIGITAL' },
+  { id: 2, title: 'GAMING MADE EASY', content: 'One-tap reservations for elite gaming stations.', tag: 'SMOOTH' },
+  { id: 3, title: 'EASY ACCESS', content: 'Instant discovery of the best arenas in your neighborhood.', tag: 'ACCESS' },
+  { id: 4, title: 'INSTANT BOOK', content: 'Real-time slot management for turfs and cafes.', tag: 'ELITE' },
 ];

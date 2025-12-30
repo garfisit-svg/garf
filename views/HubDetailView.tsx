@@ -182,27 +182,27 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                   </button>
                 </div>
 
-                <div className="space-y-4 mb-10 bg-[#020617] p-6 rounded-3xl border border-slate-800">
-                  <div className="flex justify-between pb-4 border-b border-slate-800/50">
-                    <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Venue</span>
+                <div className="space-y-4 mb-10 bg-[#020617] p-8 rounded-3xl border border-slate-800/50">
+                  <div className="flex justify-between pb-4 border-b border-slate-800/30">
+                    <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Selected Venue</span>
                     <span className="text-white font-black">{hub.name}</span>
                   </div>
-                  <div className="flex justify-between pb-4 border-b border-slate-800/50">
-                    <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Slot</span>
+                  <div className="flex justify-between pb-4 border-b border-slate-800/30">
+                    <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Time Slot</span>
                     <span className="text-white font-black">{selectedSlot?.time}</span>
                   </div>
-                  <div className="flex justify-between pt-2">
-                    <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Payable</span>
-                    <span className="text-2xl font-black text-emerald-400">₹{selectedSlot?.price}</span>
+                  <div className="flex justify-between pt-4">
+                    <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Total Payable</span>
+                    <span className="text-3xl font-black text-emerald-400">₹{selectedSlot?.price}</span>
                   </div>
                 </div>
 
                 <div className="space-y-4 mb-10">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Payment Method</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Select Payment Mode</p>
                   <div className="grid grid-cols-2 gap-4">
                     <button 
                       onClick={() => setPaymentMethod('online')}
-                      className={`py-5 px-4 rounded-3xl border transition-all font-black text-xs uppercase tracking-widest ${
+                      className={`py-6 px-4 rounded-3xl border transition-all font-black text-xs uppercase tracking-widest ${
                         paymentMethod === 'online' 
                         ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
                         : 'bg-[#020617] border-slate-800 text-slate-500 hover:border-slate-600'
@@ -212,7 +212,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                     </button>
                     <button 
                       onClick={() => setPaymentMethod('cash')}
-                      className={`py-5 px-4 rounded-3xl border transition-all font-black text-xs uppercase tracking-widest ${
+                      className={`py-6 px-4 rounded-3xl border transition-all font-black text-xs uppercase tracking-widest ${
                         paymentMethod === 'cash' 
                         ? 'bg-yellow-600 border-yellow-400 text-white shadow-[0_0_20px_rgba(202,138,4,0.4)]' 
                         : 'bg-[#020617] border-slate-800 text-slate-500 hover:border-slate-600'
@@ -224,11 +224,13 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 </div>
 
                 {paymentMethod === 'cash' && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 mb-10 animate-in slide-in-from-top-2 duration-300">
-                    <div className="flex gap-3">
-                      <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 mb-10 animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
                       <p className="text-xs font-bold text-red-400 leading-tight">
                         Arrive within 15 mins of your slot starting time otherwise released
                       </p>
@@ -245,13 +247,13 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                       : 'bg-slate-800 text-slate-600 cursor-not-allowed'
                   }`}
                 >
-                  Book Now
+                  Book Session
                 </button>
               </>
             ) : (
               <div className="text-center py-10 animate-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                  <svg className="w-10 h-10 text-[#020617]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(16,185,129,0.5)]">
+                  <svg className="w-12 h-12 text-[#020617]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
