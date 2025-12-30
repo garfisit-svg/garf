@@ -20,8 +20,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
     return matchesSearch;
   });
 
-  // Tripling the arrays ensures enough content for a seamless infinite loop regardless of screen width
-  const scrollingHubs = [...filteredHubs, ...filteredHubs, ...filteredHubs];
+  // Doubling the arrays ensures enough content for a seamless infinite loop
+  const scrollingHubs = [...filteredHubs, ...filteredHubs, ...filteredHubs, ...filteredHubs];
   
   const scrollingBuzz = [
     { title: 'WEEKEND PLANS', content: 'Book group sessions for elite Saturday/Sunday matches.', color: 'border-blue-500/40' },
@@ -29,10 +29,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
     { title: 'NIGHT OWL', content: 'Select cafes stay open till 4 AM for hardcore grinders.', color: 'border-slate-800' },
     { title: 'WEEKLY CLASH', content: 'Join local tournaments and win premium gear every week.', color: 'border-emerald-500/40' },
   ];
-  const fullScrollingBuzz = [...scrollingBuzz, ...scrollingBuzz, ...scrollingBuzz];
+  const fullScrollingBuzz = [...scrollingBuzz, ...scrollingBuzz, ...scrollingBuzz, ...scrollingBuzz];
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#020617] text-white">
       <Navbar role="user" onLogout={onLogout} onNavigateHome={onNavigateHome} />
 
       <main className="max-w-[1600px] mx-auto py-8">
@@ -203,20 +203,20 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
 
         @keyframes marquee {
           0% { transform: translateX(0); }
-          100% { transform: translateX(calc(-33.333% - 1.333rem)); }
+          100% { transform: translateX(-50%); }
         }
 
         @keyframes marquee-reverse {
-          0% { transform: translateX(calc(-33.333% - 1rem)); }
+          0% { transform: translateX(-50%); }
           100% { transform: translateX(0); }
         }
 
         .animate-marquee {
-          animation: marquee 60s linear infinite;
+          animation: marquee 30s linear infinite;
         }
 
         .animate-marquee-reverse {
-          animation: marquee-reverse 50s linear infinite;
+          animation: marquee-reverse 25s linear infinite;
         }
 
         .pause-on-hover:hover {
