@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { UserRole, Hub } from './types';
-import { MOCK_HUBS } from './constants';
+import React, { useState } from 'react';
+import { UserRole, Hub, Booking } from './types';
+import { MOCK_HUBS, MOCK_BOOKINGS } from './constants';
 import LandingView from './views/LandingView';
 import AuthView from './views/AuthView';
 import UserDashboard from './views/UserDashboard';
@@ -14,6 +14,11 @@ const App: React.FC = () => {
   const [authType, setAuthType] = useState<UserRole>('user');
   const [selectedHub, setSelectedHub] = useState<Hub | null>(null);
   const [editingHub, setEditingHub] = useState<Hub | null>(null);
+  
+  // Dynamic Hub state
+  const [hubs, setHubs] = useState<Hub[]>(MOCK_HUBS);
+  // Dynamic Bookings state
+  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
 
   const handleStartAuth = (role: UserRole) => {
     setAuthType(role);
@@ -25,6 +30,7 @@ const App: React.FC = () => {
   };
 
   const handleHubSelect = (hub: Hub) => {
+    if (hub.isSoldOut) return;
     setSelectedHub(hub);
     setView('hub-detail');
   };
@@ -55,12 +61,42 @@ const App: React.FC = () => {
     setView('hub-register');
   };
 
+  const handleSaveHub = (newHub: Hub) => {
+    setHubs(prev => {
+      const exists = prev.find(h => h.id === newHub.id);
+      if (exists) {
+        return prev.map(h => h.id === newHub.id ? newHub : h);
+      }
+      return [newHub, ...prev];
+    });
+    setView('owner');
+    setEditingHub(null);
+  };
+
+  const handleToggleSoldOut = (hubId: string) => {
+    setHubs(prev => prev.map(h => h.id === hubId ? { ...h, isSoldOut: !h.isSoldOut } : h));
+  };
+
+  const handleCreateBooking = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status' | 'userId' | 'userName'>) => {
+    const newBooking: Booking = {
+      ...bookingData,
+      id: 'b-' + Date.now(),
+      createdAt: Date.now(),
+      status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed',
+      userId: 'u-current',
+      userName: 'Current User', // Mock name
+    };
+    setBookings(prev => [newBooking, ...prev]);
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100">
       {view === 'landing' && <LandingView onStartAuth={handleStartAuth} onBrowseGuest={() => setView('user')} />}
       {view === 'auth' && <AuthView type={authType} onBack={handleBack} onSuccess={handleAuthSuccess} />}
       {view === 'user' && (
         <UserDashboard 
+          hubs={hubs}
+          bookings={bookings.filter(b => b.userId === 'u-current')}
           onLogout={handleLogout} 
           onHubSelect={handleHubSelect} 
           onNavigateHome={() => setView('user')}
@@ -72,13 +108,16 @@ const App: React.FC = () => {
           onBack={handleBack} 
           role={authType} 
           onLogout={handleLogout}
+          onBook={handleCreateBooking}
         />
       )}
       {view === 'owner' && (
         <OwnerDashboard 
+          hubs={hubs}
           onLogout={handleLogout} 
           onAddHub={handleAddHub}
           onEditHub={handleEditHub}
+          onToggleSoldOut={handleToggleSoldOut}
           onNavigateHome={() => setView('owner')}
         />
       )}
@@ -88,6 +127,7 @@ const App: React.FC = () => {
           onLogout={handleLogout} 
           onNavigateHome={() => setView('owner')} 
           hubToEdit={editingHub || undefined}
+          onSave={handleSaveHub}
         />
       )}
     </div>

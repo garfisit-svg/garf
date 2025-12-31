@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { MOCK_HUBS, MOCK_BOOKINGS } from '../constants';
+import { MOCK_BOOKINGS } from '../constants';
 import { Booking, Hub } from '../types';
 
 const ArrivalTimer: React.FC<{ createdAt: number }> = ({ createdAt }) => {
@@ -14,7 +14,6 @@ const ArrivalTimer: React.FC<{ createdAt: number }> = ({ createdAt }) => {
       const remaining = Math.max(0, fifteenMins - elapsed);
       setTimeLeft(remaining);
     };
-
     calculate();
     const interval = setInterval(calculate, 1000);
     return () => clearInterval(interval);
@@ -31,13 +30,15 @@ const ArrivalTimer: React.FC<{ createdAt: number }> = ({ createdAt }) => {
 };
 
 interface OwnerDashboardProps {
+  hubs: Hub[];
   onLogout: () => void;
   onAddHub: () => void;
   onEditHub: (hub: Hub) => void;
+  onToggleSoldOut: (hubId: string) => void;
   onNavigateHome: () => void;
 }
 
-const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onLogout, onAddHub, onEditHub, onNavigateHome }) => {
+const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, onLogout, onAddHub, onEditHub, onToggleSoldOut, onNavigateHome }) => {
   const [activeTab, setActiveTab] = useState<'management' | 'arrivals' | 'analytics'>('management');
   const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
 
@@ -63,12 +64,11 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onLogout, onAddHub, onE
           </button>
         </header>
 
-        {/* Tab Selection centered as per screenshot */}
         <div className="flex justify-start mb-12">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[20px] p-1.5 flex gap-1">
             {[
-              { id: 'arrivals', label: 'Live Arrivals' },
               { id: 'management', label: 'Management' },
+              { id: 'arrivals', label: 'Live Arrivals' },
               { id: 'analytics', label: 'Analytics' }
             ].map((tab) => (
               <button
@@ -104,20 +104,17 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onLogout, onAddHub, onE
                       <p className="text-slate-500 font-bold uppercase text-xs tracking-widest">{b.hubName} • {b.accessoryName || 'Main Area'}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-12">
                     <div className="text-center">
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Schedule</p>
                        <p className="text-xl font-black">{b.slotTime}</p>
                     </div>
-
                     {b.status === 'pending' && b.paymentMethod === 'cash' && (
                       <div className="text-center px-8 border-x border-slate-800">
                          <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Arrival Window</p>
                          <ArrivalTimer createdAt={b.createdAt} />
                       </div>
                     )}
-
                     <div className="flex items-center gap-3">
                       {b.status === 'pending' ? (
                         <>
@@ -140,18 +137,12 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onLogout, onAddHub, onE
         {activeTab === 'analytics' && (
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="bg-[#0b1120] border border-slate-800 rounded-[40px] p-10">
-               <h3 className="text-xl font-black uppercase mb-8 tracking-tighter">Payment Growth</h3>
-               <div className="h-64 flex items-end gap-2 relative">
-                  <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                    <path d="M0,200 C50,150 100,180 150,100 200,120 250,50 300,70 350,20 400,40" fill="none" stroke="#10b981" strokeWidth="4" />
-                  </svg>
-                  <div className="absolute bottom-0 left-0 w-full h-px bg-slate-800"></div>
-               </div>
+               <h3 className="text-xl font-black uppercase mb-8 tracking-tighter">Performance Matrix</h3>
                <div className="mt-8 grid grid-cols-4 gap-4 text-center">
-                  <div><p className="text-2xl font-black">₹45k</p><p className="text-[10px] text-slate-500 uppercase font-bold">This Week</p></div>
-                  <div><p className="text-2xl font-black text-emerald-400">+12%</p><p className="text-[10px] text-slate-500 uppercase font-bold">Growth</p></div>
-                  <div><p className="text-2xl font-black">180</p><p className="text-[10px] text-slate-500 uppercase font-bold">Bookings</p></div>
-                  <div><p className="text-2xl font-black">4.8</p><p className="text-[10px] text-slate-500 uppercase font-bold">Avg Rating</p></div>
+                  <div><p className="text-2xl font-black">₹{hubs.length * 15}k</p><p className="text-[10px] text-slate-500 uppercase font-bold">Rev Forecast</p></div>
+                  <div><p className="text-2xl font-black text-emerald-400">+{hubs.length}%</p><p className="text-[10px] text-slate-500 uppercase font-bold">Growth</p></div>
+                  <div><p className="text-2xl font-black">{hubs.length * 12}</p><p className="text-[10px] text-slate-500 uppercase font-bold">Bookings</p></div>
+                  <div><p className="text-2xl font-black">4.9</p><p className="text-[10px] text-slate-500 uppercase font-bold">Avg Rating</p></div>
                </div>
             </div>
           </div>
@@ -159,30 +150,48 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onLogout, onAddHub, onE
 
         {activeTab === 'management' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-            {MOCK_HUBS.map(hub => (
-              <div key={hub.id} className="bg-[#0b1120] border border-slate-800 rounded-[40px] overflow-hidden group transition-all hover:border-slate-600">
-                <div className="relative h-64 w-full">
-                  <img src={hub.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt="" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] to-transparent opacity-80"></div>
-                  <div className="absolute bottom-8 left-8">
-                    <h4 className="text-4xl font-black text-white tracking-tighter mb-1 uppercase">{hub.name.split(' ')[0]}</h4>
-                    <p className="text-slate-400 font-black text-sm tracking-widest uppercase">{hub.location.substring(0, 3)}</p>
+            {hubs.length === 0 ? (
+              <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-[40px]">
+                <p className="text-slate-600 font-black uppercase tracking-widest">No Venues Registered Yet</p>
+                <button onClick={onAddHub} className="mt-4 text-[#10b981] font-black uppercase tracking-widest hover:underline">+ Launch First Venue</button>
+              </div>
+            ) : (
+              hubs.map(hub => (
+                <div key={hub.id} className="bg-[#0b1120] border border-slate-800 rounded-[40px] overflow-hidden group transition-all hover:border-slate-600">
+                  <div className="relative h-64 w-full">
+                    <img src={hub.image} className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${hub.isSoldOut ? 'grayscale contrast-125' : ''}`} alt="" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] to-transparent opacity-80"></div>
+                    {hub.isSoldOut && (
+                       <div className="absolute top-8 right-8 bg-red-600 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest animate-pulse">
+                         Sold Out
+                       </div>
+                    )}
+                    <div className="absolute bottom-8 left-8">
+                      <h4 className="text-4xl font-black text-white tracking-tighter mb-1 uppercase">{hub.name}</h4>
+                      <p className="text-slate-400 font-black text-sm tracking-widest uppercase">{hub.location}</p>
+                    </div>
+                  </div>
+                  <div className="p-8 flex gap-4">
+                    <button 
+                      onClick={() => onToggleSoldOut(hub.id)}
+                      className={`flex-1 py-5 border font-black rounded-2xl uppercase text-[11px] tracking-widest transition-all ${
+                        hub.isSoldOut 
+                          ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20' 
+                          : 'bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981] hover:bg-[#10b981]/20'
+                      }`}
+                    >
+                      {hub.isSoldOut ? 'Sold Out' : 'Active'}
+                    </button>
+                    <button 
+                      onClick={() => onEditHub(hub)}
+                      className="flex-1 py-5 bg-slate-900 border border-slate-800 text-white font-black rounded-2xl uppercase text-[11px] tracking-widest hover:bg-slate-800 transition-all"
+                    >
+                      Edit Hub
+                    </button>
                   </div>
                 </div>
-                
-                <div className="p-8 flex gap-4">
-                  <button className="flex-1 py-5 bg-[#10b981]/5 border border-[#10b981]/30 text-[#10b981] font-black rounded-2xl uppercase text-[11px] tracking-widest hover:bg-[#10b981]/10 transition-all">
-                    Active
-                  </button>
-                  <button 
-                    onClick={() => onEditHub(hub)}
-                    className="flex-1 py-5 bg-slate-900 border border-slate-800 text-white font-black rounded-2xl uppercase text-[11px] tracking-widest hover:bg-slate-800 transition-all"
-                  >
-                    Edit Hub
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </main>

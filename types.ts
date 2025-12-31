@@ -20,6 +20,8 @@ export interface Hub {
   name: string;
   type: 'TURF' | 'GAMING CAFE';
   location: string;
+  lat?: number;
+  lng?: number;
   rating: number;
   image: string;
   priceStart: number;
@@ -28,6 +30,7 @@ export interface Hub {
   slots: TimeSlot[]; // For Turfs
   accessories?: Accessory[]; // For Gaming Cafes
   isBestSeller?: boolean;
+  isSoldOut?: boolean;
 }
 
 export interface Booking {

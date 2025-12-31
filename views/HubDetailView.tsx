@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Hub, UserRole, TimeSlot } from '../types';
+import { Hub, UserRole, TimeSlot, Accessory, Booking } from '../types';
 import Navbar from '../components/Navbar';
 import { StarIcon } from '../components/Icons';
 
@@ -9,9 +9,11 @@ interface HubDetailViewProps {
   role: UserRole;
   onBack: () => void;
   onLogout: () => void;
+  onBook: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status' | 'userId' | 'userName'>) => void;
 }
 
-const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout }) => {
+const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout, onBook }) => {
+  const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(hub.accessories && hub.accessories.length > 0 ? hub.accessories[0] : null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash' | null>(null);
@@ -22,13 +24,24 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
   };
 
   const handleFinalBooking = () => {
-    if (paymentMethod) {
+    if (paymentMethod && selectedSlot) {
+      onBook({
+        hubId: hub.id,
+        hubName: hub.name,
+        slotId: selectedSlot.id,
+        slotTime: selectedSlot.time,
+        date: new Date().toISOString().split('T')[0],
+        paymentMethod,
+        accessoryName: selectedAccessory?.name
+      });
       setIsBooked(true);
       setTimeout(() => {
         onBack();
       }, 3000);
     }
   };
+
+  const displaySlots = hub.type === 'TURF' ? hub.slots : (selectedAccessory?.slots || []);
 
   return (
     <div className="min-h-screen bg-[#020617] relative">
@@ -50,7 +63,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
             <div className="bg-[#0b1120] border border-slate-800 rounded-[40px] p-10">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center">
-                   <span className="text-white font-black text-xs uppercase">Hub</span>
+                   <span className="text-white font-black text-xs uppercase">{hub.type === 'TURF' ? 'Turf' : 'Gear'}</span>
                 </div>
                 <h1 className="text-5xl font-black text-white tracking-tighter uppercase">{hub.name}</h1>
               </div>
@@ -58,28 +71,61 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 {hub.description}
               </p>
 
-              <div className="flex items-center gap-4">
-                 <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/20">
+              {hub.type === 'GAMING CAFE' && hub.accessories && (
+                <div className="mb-12">
+                  <div className="flex items-center gap-2 bg-blue-500/10 text-blue-400 px-4 py-2 rounded-xl border border-blue-500/20 mb-6 inline-flex">
                     <span className="text-[10px] font-black uppercase tracking-widest">01</span>
-                    <span className="font-black uppercase">Session Pick</span>
-                 </div>
+                    <span className="font-black uppercase">Select Gear Unit</span>
+                  </div>
+                  <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                    {hub.accessories.map((acc) => (
+                      <button
+                        key={acc.id}
+                        onClick={() => {
+                          setSelectedAccessory(acc);
+                          setSelectedSlot(null);
+                        }}
+                        className={`flex-shrink-0 px-8 py-5 rounded-3xl border transition-all ${
+                          selectedAccessory?.id === acc.id
+                            ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]'
+                            : 'bg-[#020617] border-slate-800 text-slate-500 hover:border-slate-600'
+                        }`}
+                      >
+                        <p className="text-xs font-black uppercase tracking-widest mb-1">Unit</p>
+                        <p className="text-xl font-black">{acc.name}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/20 mb-8 inline-flex">
+                <span className="text-[10px] font-black uppercase tracking-widest">{hub.type === 'TURF' ? '01' : '02'}</span>
+                <span className="font-black uppercase">Pick Session Time</span>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
-                {hub.slots.map((slot) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {displaySlots.length > 0 ? displaySlots.map((slot) => (
                   <button
                     key={slot.id}
                     onClick={() => setSelectedSlot(slot)}
-                    className={`p-6 rounded-3xl border transition-all text-center flex flex-col items-center gap-1 ${
+                    className={`p-6 rounded-3xl border transition-all flex flex-col items-center gap-1 ${
                       selectedSlot?.id === slot.id 
                         ? 'bg-emerald-500 border-emerald-400 text-[#020617] shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
                         : 'bg-[#020617] border-slate-800 text-white hover:border-slate-600'
                     }`}
                   >
                     <span className="text-2xl font-black">{slot.time}</span>
-                    <span className={`text-xs font-bold uppercase tracking-widest ${selectedSlot?.id === slot.id ? 'text-[#020617]/70' : 'text-slate-500'}`}>₹{slot.price}</span>
+                    <div className="flex items-center gap-1">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${selectedSlot?.id === slot.id ? 'text-[#020617]/70' : 'text-slate-500'}`}>Price</span>
+                      <span className={`text-sm font-black ${selectedSlot?.id === slot.id ? 'text-[#020617]' : 'text-emerald-400'}`}>₹{slot.price}</span>
+                    </div>
                   </button>
-                ))}
+                )) : (
+                  <div className="col-span-full py-12 text-center bg-[#020617] border border-dashed border-slate-800 rounded-3xl">
+                    <p className="text-slate-600 font-black uppercase tracking-widest">No slots available for this selection</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -110,20 +156,26 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
             <div className="bg-[#0b1120] border border-slate-800 rounded-[40px] p-10 shadow-2xl">
               <h3 className="text-3xl font-black text-white mb-8 tracking-tighter uppercase">Checkout</h3>
               
-              <div className="bg-[#020617] border border-dashed border-slate-800 rounded-3xl h-[240px] flex flex-col items-center justify-center p-8 text-center">
+              <div className="bg-[#020617] border border-dashed border-slate-800 rounded-3xl min-h-[240px] flex flex-col items-center justify-center p-8 text-center">
                 {selectedSlot ? (
-                  <div className="w-full">
-                     <div className="flex justify-between items-center mb-6">
-                        <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">Venue</span>
+                  <div className="w-full space-y-6 text-left">
+                     <div className="flex justify-between items-center">
+                        <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Hub</span>
                         <span className="text-white font-black truncate max-w-[150px]">{hub.name}</span>
                      </div>
-                     <div className="flex justify-between items-center mb-6">
-                        <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">Slot</span>
+                     {hub.type === 'GAMING CAFE' && selectedAccessory && (
+                       <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Unit</span>
+                          <span className="text-blue-400 font-black">{selectedAccessory.name}</span>
+                       </div>
+                     )}
+                     <div className="flex justify-between items-center">
+                        <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Session</span>
                         <span className="text-white font-black">{selectedSlot.time}</span>
                      </div>
-                     <div className="h-px bg-slate-800 mb-6"></div>
+                     <div className="h-px bg-slate-800"></div>
                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">Total</span>
+                        <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Total</span>
                         <span className="text-3xl font-black text-emerald-400">₹{selectedSlot.price}</span>
                      </div>
                   </div>
@@ -134,7 +186,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                        </svg>
                     </div>
-                    <p className="text-xs font-black text-slate-600 uppercase tracking-widest">Select a slot to proceed</p>
+                    <p className="text-xs font-black text-slate-600 uppercase tracking-widest">Complete selection to proceed</p>
                   </>
                 )}
               </div>
@@ -142,13 +194,13 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
               <button 
                 disabled={!selectedSlot}
                 onClick={handleConfirmOrder}
-                className={`w-full py-5 rounded-2xl font-black text-lg transition-all mt-8 ${
+                className={`w-full py-5 rounded-2xl font-black text-lg transition-all mt-8 uppercase tracking-widest ${
                   selectedSlot 
                     ? 'bg-emerald-500 text-[#020617] hover:bg-emerald-400 shadow-[0_8px_30px_rgba(16,185,129,0.3)]' 
                     : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                 }`}
               >
-                Confirm Order
+                Book Session
               </button>
             </div>
           </aside>
@@ -174,6 +226,12 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                     <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Venue</span>
                     <span className="text-white font-black">{hub.name}</span>
                   </div>
+                  {hub.type === 'GAMING CAFE' && selectedAccessory && (
+                    <div className="flex justify-between pb-4 border-b border-slate-800/30">
+                      <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Unit</span>
+                      <span className="text-blue-400 font-black">{selectedAccessory.name}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between pb-4 border-b border-slate-800/30">
                     <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Time Slot</span>
                     <span className="text-white font-black">{selectedSlot?.time}</span>
@@ -210,7 +268,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 )}
 
                 <button disabled={!paymentMethod} onClick={handleFinalBooking} className={`w-full py-6 rounded-3xl font-black text-lg transition-all uppercase tracking-[0.2em] ${paymentMethod ? 'bg-white text-black hover:scale-[1.02]' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}>
-                  Book Session
+                  Finalize Booking
                 </button>
               </>
             ) : (
