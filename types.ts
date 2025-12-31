@@ -60,3 +60,33 @@ export interface Booking {
   playerCount?: number; // New: for turf share calculation
   perPersonShare?: number; // New: calculated amount per player
 }
+
+export interface PollOption {
+  text: string;
+  votes: string[]; // nicknames of voters
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  options: PollOption[];
+  createdBy: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderNickname: string;
+  text?: string;
+  timestamp: number;
+  type: 'text' | 'poll';
+  poll?: Poll;
+  isSystem?: boolean;
+}
+
+export interface ChatRoom {
+  id: string;
+  name: string;
+  description: string;
+  isGlobal: boolean;
+  messages: ChatMessage[];
+}
