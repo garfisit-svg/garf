@@ -15,6 +15,14 @@ export interface Accessory {
   slots: TimeSlot[];
 }
 
+export interface Review {
+  id: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
 export interface Hub {
   id: string;
   name: string;
@@ -23,7 +31,7 @@ export interface Hub {
   lat?: number;
   lng?: number;
   rating: number;
-  image: string;
+  images: string[]; // Changed from image: string
   priceStart: number;
   description: string;
   amenities: string[];
@@ -33,6 +41,7 @@ export interface Hub {
   isSoldOut?: boolean;
   contactPhone?: string;
   contactEmail?: string;
+  reviews?: Review[];
 }
 
 export interface Booking {

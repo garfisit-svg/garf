@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserRole, Hub, Booking } from './types';
+import { UserRole, Hub, Booking, Review } from './types';
 import LandingView from './views/LandingView';
 import AuthView from './views/AuthView';
 import UserDashboard from './views/UserDashboard';
@@ -74,6 +74,23 @@ const App: React.FC = () => {
     setOwnerHubIds(prev => new Set(prev).add(newHub.id));
     setView('owner');
     setEditingHub(null);
+  };
+
+  const handlePostReview = (hubId: string, review: Omit<Review, 'id' | 'date'>) => {
+    const newReview: Review = {
+      ...review,
+      id: 'rev-' + Date.now(),
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    setHubs(prev => prev.map(hub => {
+      if (hub.id === hubId) {
+        const updatedReviews = [newReview, ...(hub.reviews || [])];
+        const avgRating = updatedReviews.reduce((acc, curr) => acc + curr.rating, 0) / updatedReviews.length;
+        return { ...hub, reviews: updatedReviews, rating: parseFloat(avgRating.toFixed(1)) };
+      }
+      return hub;
+    }));
   };
 
   const handleToggleSoldOut = (hubId: string) => {
@@ -177,6 +194,7 @@ const App: React.FC = () => {
           role={authType} 
           onLogout={handleLogout}
           onBook={handleCreateBooking}
+          onPostReview={handlePostReview}
         />
       )}
       {view === 'owner' && (

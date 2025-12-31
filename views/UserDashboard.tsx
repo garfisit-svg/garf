@@ -100,7 +100,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
       return 0;
     });
 
-  // These hubs appear in the featured marquee
   const bestSellers = hubs.filter(h => (h.isBestSeller || h.rating >= 4.7) && !h.isSoldOut);
   const marqueeHubs = [...bestSellers, ...bestSellers, ...bestSellers, ...bestSellers];
   const marqueeBuzz = [...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ];
@@ -179,7 +178,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
               </div>
             </section>
 
-            {/* Top Tier Marquee - NOW ALWAYS APPEARS */}
             {marqueeHubs.length > 0 && (
               <section className="mb-20 relative overflow-hidden group">
                 <div className="px-6 flex items-center gap-4 mb-8">
@@ -197,7 +195,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                         onClick={() => onHubSelect(hub)}
                         className="flex-shrink-0 w-[320px] h-[160px] bg-[#0b1120] border border-slate-800 rounded-[32px] overflow-hidden cursor-pointer group/card transition-all hover:border-[#10b981]/50 relative shadow-2xl hover:-translate-y-2"
                       >
-                        <img src={hub.image} className="absolute inset-0 w-full h-full object-cover opacity-30 transition-transform duration-1000" alt="" />
+                        <img src={hub.images[0]} className="absolute inset-0 w-full h-full object-cover opacity-30 transition-transform duration-1000" alt="" />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/20 to-transparent"></div>
                         <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
                           <div>
@@ -215,7 +213,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
               </section>
             )}
 
-            {/* Filter & Sort Controls */}
             <section className="px-6 mb-16 flex flex-col md:flex-row items-center justify-center gap-6">
               <div className="flex items-center gap-3 bg-[#0b1120]/50 p-1.5 rounded-[22px] border border-slate-800">
                 {[
@@ -266,7 +263,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
               </div>
             </section>
 
-            {/* Garf Buzz Horizontal Movement */}
             <section className="mb-24 relative overflow-hidden">
               <div className="px-6 flex items-center gap-4 mb-8">
                 <div className="w-1.5 h-7 bg-purple-600 rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]"></div>
@@ -294,7 +290,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
               </div>
             </section>
 
-            {/* Main Venue List */}
             <section className="px-6 mb-32">
               <div className="flex items-center justify-between mb-12 border-b border-slate-800/50 pb-10">
                 <div className="flex items-center gap-5">
@@ -317,7 +312,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                     className={`bg-[#0b1120] border border-slate-800 rounded-[48px] overflow-hidden group relative transition-all duration-500 shadow-2xl ${hub.isSoldOut ? 'opacity-60 grayscale cursor-not-allowed' : 'cursor-pointer hover:border-slate-600 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:-translate-y-2'}`}
                   >
                     <div className="h-64 relative overflow-hidden">
-                      <img src={hub.image} className={`w-full h-full object-cover transition-transform duration-1000 ${!hub.isSoldOut ? 'group-hover:scale-110' : ''}`} alt="" />
+                      <img src={hub.images[0]} className={`w-full h-full object-cover transition-transform duration-1000 ${!hub.isSoldOut ? 'group-hover:scale-110' : ''}`} alt="" />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] via-transparent to-transparent opacity-60"></div>
                       <div className="absolute top-6 right-6 flex flex-col items-end gap-3">
                         <span className={`px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl backdrop-blur-xl border ${hub.type === 'TURF' ? 'bg-[#10b981]/90 text-[#020617] border-emerald-400/20' : 'bg-blue-600/90 text-white border-blue-400/20'}`}>
@@ -363,7 +358,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
             </section>
           </>
         ) : (
-          /* Booking History Panel */
           <section className="px-6 py-10 max-w-5xl mx-auto">
             <div className="flex items-center gap-5 mb-16">
               <div className="w-2.5 h-12 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)]"></div>

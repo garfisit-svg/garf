@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Hub, UserRole, TimeSlot, Accessory, Booking } from '../types';
+import { Hub, UserRole, TimeSlot, Accessory, Booking, Review } from '../types';
 import Navbar from '../components/Navbar';
 import { StarIcon } from '../components/Icons';
 
@@ -10,14 +10,21 @@ interface HubDetailViewProps {
   onBack: () => void;
   onLogout: () => void;
   onBook: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status' | 'userId' | 'userName'>) => void;
+  onPostReview: (hubId: string, review: Omit<Review, 'id' | 'date'>) => void;
 }
 
-const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout, onBook }) => {
+const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout, onBook, onPostReview }) => {
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(hub.accessories && hub.accessories.length > 0 ? hub.accessories[0] : null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash' | null>(null);
   const [isBooked, setIsBooked] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  // Review Form State
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isPostingReview, setIsPostingReview] = useState(false);
 
   const handleConfirmOrder = () => {
     setShowSummary(true);
@@ -41,10 +48,27 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
     }
   };
 
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (reviewComment.trim() === '') return;
+    
+    setIsPostingReview(true);
+    setTimeout(() => {
+      onPostReview(hub.id, {
+        userName: 'Current User', // Mock name
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      setReviewComment('');
+      setReviewRating(5);
+      setIsPostingReview(false);
+    }, 800);
+  };
+
   const displaySlots = hub.type === 'TURF' ? hub.slots : (selectedAccessory?.slots || []);
 
   return (
-    <div className="min-h-screen bg-[#020617] relative">
+    <div className="min-h-screen bg-[#020617] relative pb-20">
       <Navbar role={role} onLogout={onLogout} onNavigateHome={onBack} />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -58,8 +82,38 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
           Back to Browse
         </button>
 
-        <div className="grid lg:grid-cols-[1fr_400px] gap-10 items-start">
-          <div className="space-y-8">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
+          <div className="space-y-12">
+            
+            {/* Image Gallery Showcase */}
+            <section className="space-y-4">
+              <div className="relative aspect-[16/9] w-full rounded-[48px] overflow-hidden border border-slate-800 shadow-2xl">
+                <img 
+                  src={hub.images[activeImageIdx]} 
+                  className="w-full h-full object-cover transition-all duration-700" 
+                  alt={hub.name} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute bottom-8 left-8">
+                   <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10">
+                      <StarIcon className="w-4 h-4 text-yellow-400" />
+                      <span className="text-xl font-black text-white">{hub.rating}</span>
+                   </div>
+                </div>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                {hub.images.map((img, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setActiveImageIdx(idx)}
+                    className={`flex-shrink-0 w-32 h-20 rounded-2xl overflow-hidden border-2 transition-all ${activeImageIdx === idx ? 'border-emerald-500 scale-105' : 'border-slate-800 opacity-60 hover:opacity-100'}`}
+                  >
+                    <img src={img} className="w-full h-full object-cover" alt="" />
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <div className="bg-[#0b1120] border border-slate-800 rounded-[40px] p-10">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center">
@@ -67,7 +121,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 </div>
                 <h1 className="text-5xl font-black text-white tracking-tighter uppercase">{hub.name}</h1>
               </div>
-              <p className="text-slate-400 text-xl leading-relaxed mb-10 max-w-2xl">
+              <p className="text-slate-400 text-xl leading-relaxed mb-10 max-w-3xl">
                 {hub.description}
               </p>
 
@@ -135,25 +189,79 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
               </div>
             </div>
 
+            {/* Dynamic Community Feedback / Review System */}
             <div className="bg-[#0b1120] border border-slate-800 rounded-[40px] p-10">
                <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center gap-3">
                      <StarIcon className="w-6 h-6 text-yellow-400" />
-                     <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Community Voice</h3>
+                     <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Arena Intel & Reviews</h3>
                   </div>
                   <div className="text-right">
                      <p className="text-4xl font-black text-white">{hub.rating}</p>
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Aggregate Rating</p>
+                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">User Aggregate</p>
                   </div>
                </div>
 
-               <div className="bg-[#020617] rounded-3xl p-8 border border-slate-800">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Rating Value</p>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <StarIcon key={i} className={`w-6 h-6 ${i <= Math.floor(hub.rating) ? 'text-yellow-400' : 'text-slate-700'}`} />
-                    ))}
+               {/* Write Review Section */}
+               <form onSubmit={handleSubmitReview} className="bg-[#020617] rounded-3xl p-8 border border-slate-800 mb-10">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Contribute your experience</p>
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center gap-2">
+                       {[1, 2, 3, 4, 5].map((star) => (
+                         <button 
+                           key={star} 
+                           type="button"
+                           onClick={() => setReviewRating(star)}
+                           className="transition-transform hover:scale-125 focus:outline-none"
+                         >
+                           <StarIcon className={`w-8 h-8 ${star <= reviewRating ? 'text-yellow-400' : 'text-slate-700'}`} />
+                         </button>
+                       ))}
+                       <span className="ml-4 text-sm font-black text-slate-500 uppercase tracking-widest">{reviewRating}/5</span>
+                    </div>
+                    <textarea 
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Share intel about the equipment, pitch quality or atmosphere..."
+                      className="w-full bg-[#0b1120] border border-slate-800 rounded-2xl p-6 text-white outline-none focus:border-emerald-500 transition-all resize-none font-medium placeholder:text-slate-700"
+                      rows={3}
+                    />
+                    <button 
+                      disabled={isPostingReview || !reviewComment.trim()}
+                      className={`py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${reviewComment.trim() ? 'bg-emerald-500 text-[#020617] hover:scale-[1.02]' : 'bg-slate-800 text-slate-600'}`}
+                    >
+                      {isPostingReview ? 'Transmitting...' : 'Post Intel'}
+                    </button>
                   </div>
+               </form>
+
+               {/* Review List */}
+               <div className="space-y-6">
+                  {hub.reviews && hub.reviews.length > 0 ? hub.reviews.map((rev) => (
+                    <div key={rev.id} className="bg-slate-900/30 border border-slate-800/50 rounded-3xl p-6 animate-in slide-in-from-bottom-4 duration-500">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center font-black text-[#10b981] text-xs">
+                             {rev.userName.charAt(0)}
+                           </div>
+                           <div>
+                              <p className="font-black text-white uppercase text-xs">{rev.userName}</p>
+                              <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{rev.date}</p>
+                           </div>
+                        </div>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <StarIcon key={s} className={`w-3 h-3 ${s <= rev.rating ? 'text-yellow-400' : 'text-slate-800'}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-slate-400 text-sm font-medium leading-relaxed italic">"{rev.comment}"</p>
+                    </div>
+                  )) : (
+                    <div className="text-center py-12 border border-dashed border-slate-800 rounded-3xl">
+                       <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No reviews found for this sector</p>
+                    </div>
+                  )}
                </div>
             </div>
           </div>
@@ -197,7 +305,6 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 )}
               </div>
 
-              {/* Arena Info Card */}
               {(hub.contactPhone || hub.contactEmail) && (
                 <div className="bg-slate-900/40 p-6 rounded-3xl border border-slate-800 mb-8 space-y-4">
                   <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-800 pb-2">Arena Contact Intel</p>

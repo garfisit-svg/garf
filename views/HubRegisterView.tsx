@@ -28,7 +28,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
   const [hubType, setHubType] = useState<'TURF' | 'GAMING CAFE'>('TURF');
   const [venueName, setVenueName] = useState('');
   const [address, setAddress] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imagesInput, setImagesInput] = useState('');
   const [description, setDescription] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -50,7 +50,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       setHubType(hubToEdit.type);
       setVenueName(hubToEdit.name);
       setAddress(hubToEdit.location);
-      setImageUrl(hubToEdit.image);
+      setImagesInput(hubToEdit.images.join(', '));
       setDescription(hubToEdit.description);
       setContactPhone(hubToEdit.contactPhone || '');
       setContactEmail(hubToEdit.contactEmail || '');
@@ -131,6 +131,11 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       return;
     }
 
+    const images = imagesInput.split(',').map(url => url.trim()).filter(url => url !== '');
+    if (images.length === 0) {
+      images.push('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200');
+    }
+
     const finalSlots: TimeSlot[] = turfSlots.map(ts => ({
       id: ts.id,
       time: ts.end ? `${ts.start} - ${ts.end}` : ts.start,
@@ -156,7 +161,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       type: hubType,
       location: address,
       rating: hubToEdit?.rating || 5.0,
-      image: imageUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200',
+      images: images,
       priceStart: hubType === 'TURF' ? (finalSlots[0]?.price || 0) : (finalAccessories[0]?.slots[0]?.price || 0),
       description: description || `Premium ${hubType.toLowerCase()} experience in ${address}.`,
       amenities: hubToEdit?.amenities || ['Parking', 'Drinking Water', 'Floodlights'],
@@ -164,7 +169,8 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       accessories: hubType === 'GAMING CAFE' ? finalAccessories : undefined,
       isBestSeller: hubToEdit?.isBestSeller || false,
       contactPhone,
-      contactEmail
+      contactEmail,
+      reviews: hubToEdit?.reviews || []
     };
 
     onSave(newHub);
@@ -251,9 +257,15 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                <div className="space-y-4">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Hero Image URL</label>
-                  <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://unsplash..." className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
+                <div className="space-y-4 col-span-full">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Gallery Image URLs (Comma Separated)</label>
+                  <textarea 
+                    rows={3}
+                    value={imagesInput} 
+                    onChange={(e) => setImagesInput(e.target.value)} 
+                    placeholder="https://img1.com, https://img2.com..." 
+                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg resize-none" 
+                  />
                 </div>
                 <div className="space-y-4 col-span-full">
                   <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Arena Description</label>
