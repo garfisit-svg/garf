@@ -16,6 +16,7 @@ interface HubDetailViewProps {
 const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout, onBook, onPostReview }) => {
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(hub.accessories && hub.accessories.length > 0 ? hub.accessories[0] : null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [playerCount, setPlayerCount] = useState<number>(5);
   const [showSummary, setShowSummary] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash' | null>(null);
   const [isBooked, setIsBooked] = useState(false);
@@ -39,7 +40,9 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
         slotTime: selectedSlot.time,
         date: new Date().toISOString().split('T')[0],
         paymentMethod,
-        accessoryName: selectedAccessory?.name
+        accessoryName: selectedAccessory?.name,
+        playerCount: hub.type === 'TURF' ? playerCount : undefined,
+        perPersonShare: hub.type === 'TURF' ? Math.round(selectedSlot.price / playerCount) : undefined
       });
       setIsBooked(true);
       setTimeout(() => {
@@ -125,6 +128,29 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 {hub.description}
               </p>
 
+              {hub.type === 'TURF' && (
+                <div className="mb-12">
+                   <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/20 mb-6 inline-flex">
+                      <span className="text-[10px] font-black uppercase tracking-widest">01</span>
+                      <span className="font-black uppercase">Number of Players</span>
+                   </div>
+                   <div className="flex items-center gap-6 bg-[#020617] border border-slate-800 rounded-3xl p-6">
+                      <input 
+                        type="range" 
+                        min="1" 
+                        max="22" 
+                        value={playerCount} 
+                        onChange={(e) => setPlayerCount(parseInt(e.target.value))}
+                        className="flex-1 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#10b981]"
+                      />
+                      <div className="w-20 h-14 bg-[#0b1120] border border-slate-800 rounded-2xl flex items-center justify-center">
+                         <span className="text-2xl font-black text-[#10b981]">{playerCount}</span>
+                      </div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest max-w-[80px]">Total Athletes</p>
+                   </div>
+                </div>
+              )}
+
               {hub.type === 'GAMING CAFE' && hub.accessories && (
                 <div className="mb-12">
                   <div className="flex items-center gap-2 bg-blue-500/10 text-blue-400 px-4 py-2 rounded-xl border border-blue-500/20 mb-6 inline-flex">
@@ -154,7 +180,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
               )}
 
               <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/20 mb-8 inline-flex">
-                <span className="text-[10px] font-black uppercase tracking-widest">{hub.type === 'TURF' ? '01' : '02'}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">02</span>
                 <span className="font-black uppercase">Pick Session Time</span>
               </div>
               
@@ -287,10 +313,22 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                         <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Session</span>
                         <span className="text-white font-black">{selectedSlot.time}</span>
                      </div>
+                     {hub.type === 'TURF' && (
+                       <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Team Size</span>
+                          <span className="text-white font-black">{playerCount} Players</span>
+                       </div>
+                     )}
                      <div className="h-px bg-slate-800"></div>
+                     {hub.type === 'TURF' && (
+                       <div className="flex justify-between items-center p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20">
+                          <span className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em]">Split Share</span>
+                          <span className="text-xl font-black text-emerald-400">₹{Math.round(selectedSlot.price / playerCount)} <span className="text-[10px] opacity-60">/person</span></span>
+                       </div>
+                     )}
                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Total</span>
-                        <span className="text-3xl font-black text-emerald-400">₹{selectedSlot.price}</span>
+                        <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Total Bill</span>
+                        <span className="text-3xl font-black text-white">₹{selectedSlot.price}</span>
                      </div>
                   </div>
                 ) : (
@@ -368,6 +406,12 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                     <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Time Slot</span>
                     <span className="text-white font-black">{selectedSlot?.time}</span>
                   </div>
+                  {hub.type === 'TURF' && (
+                    <div className="flex justify-between pb-4 border-b border-slate-800/30">
+                      <span className="text-[#10b981] font-black uppercase text-[10px] tracking-widest">Per Person Share</span>
+                      <span className="text-white font-black">₹{Math.round((selectedSlot?.price || 0) / playerCount)} × {playerCount}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between pt-4">
                     <span className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Payable</span>
                     <span className="text-3xl font-black text-emerald-400">₹{selectedSlot?.price}</span>

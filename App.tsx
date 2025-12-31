@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [authType, setAuthType] = useState<UserRole>('user');
   const [selectedHub, setSelectedHub] = useState<Hub | null>(null);
   const [editingHub, setEditingHub] = useState<Hub | null>(null);
+  const [userNickname, setUserNickname] = useState<string>('Player One');
   
   // Initialize with dummy data for user browsing
   const [hubs, setHubs] = useState<Hub[]>(MOCK_HUBS);
@@ -27,7 +28,12 @@ const App: React.FC = () => {
     setView('auth');
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (nickname?: string) => {
+    if (nickname) {
+      setUserNickname(nickname);
+    } else if (authType === 'owner') {
+      setUserNickname('System Owner'); // Fixed identifier for owners
+    }
     setView(authType === 'owner' ? 'owner' : 'user');
   };
 
@@ -51,6 +57,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setView('landing');
     setEditingHub(null);
+    setUserNickname('Player One');
   };
 
   const handleAddHub = () => {
@@ -104,7 +111,7 @@ const App: React.FC = () => {
       createdAt: Date.now(),
       status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed',
       userId: 'u-current',
-      userName: 'Current User',
+      userName: userNickname,
     };
 
     setBookings(prev => [newBooking, ...prev]);
@@ -181,6 +188,7 @@ const App: React.FC = () => {
       {view === 'user' && (
         <UserDashboard 
           hubs={hubs}
+          nickname={userNickname}
           bookings={bookings.filter(b => b.userId === 'u-current')}
           onLogout={handleLogout} 
           onHubSelect={handleHubSelect} 

@@ -31,7 +31,7 @@ export interface Hub {
   lat?: number;
   lng?: number;
   rating: number;
-  images: string[]; // Changed from image: string
+  images: string[];
   priceStart: number;
   description: string;
   amenities: string[];
@@ -57,4 +57,6 @@ export interface Booking {
   status: 'confirmed' | 'pending' | 'expired';
   paymentMethod: 'online' | 'cash';
   accessoryName?: string;
+  playerCount?: number; // New: for turf share calculation
+  perPersonShare?: number; // New: calculated amount per player
 }

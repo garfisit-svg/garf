@@ -7,6 +7,7 @@ import { SearchIcon, StarIcon, MapPinIcon } from '../components/Icons';
 
 interface UserDashboardProps {
   hubs: Hub[];
+  nickname: string;
   bookings: Booking[];
   onLogout: () => void;
   onHubSelect: (hub: Hub) => void;
@@ -15,7 +16,7 @@ interface UserDashboardProps {
 
 type SortOption = 'recommended' | 'distance' | 'price' | 'rating';
 
-const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout, onHubSelect, onNavigateHome }) => {
+const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, nickname, bookings, onLogout, onHubSelect, onNavigateHome }) => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'TURF' | 'GAMING CAFE'>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
@@ -110,6 +111,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
 
       <main className="max-w-[1600px] mx-auto py-8">
         
+        {/* Welcome Section */}
+        <div className="px-6 mb-8">
+          <p className="text-[#10b981] text-[10px] font-black uppercase tracking-[0.5em] mb-1">Authenticated Session</p>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Welcome back, {nickname}</h2>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="px-6 mb-12 flex justify-center">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[24px] p-2 flex gap-1 shadow-2xl">
@@ -398,6 +405,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                           {booking.status}
                         </span>
                       </div>
+                      {booking.playerCount && (
+                        <div className="text-center border-l border-slate-800 pl-6">
+                          <p className="text-[10px] font-black text-[#10b981] uppercase tracking-widest mb-1.5">Split Share</p>
+                          <p className="text-lg font-black text-white">₹{booking.perPersonShare}/person</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="text-right">

@@ -5,19 +5,20 @@ import { UserRole } from '../types';
 interface AuthViewProps {
   type: UserRole;
   onBack: () => void;
-  onSuccess: () => void;
+  onSuccess: (nickname?: string) => void;
 }
 
 const AuthView: React.FC<AuthViewProps> = ({ type, onBack, onSuccess }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, we would handle registration or login logic here
-    onSuccess();
+    // Only pass nickname if it's a user role
+    onSuccess(type === 'user' ? (nickname || name || 'Player One') : undefined);
   };
 
   return (
@@ -52,6 +53,21 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onBack, onSuccess }) => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 className="w-full bg-[#020617] border border-slate-800 text-white rounded-2xl py-4 px-6 focus:border-cyan-500 outline-none transition-all placeholder:text-slate-700"
+                required
+              />
+            </div>
+          )}
+
+          {/* Nickname is EXCLUSIVELY for users */}
+          {type === 'user' && (
+            <div className="space-y-2">
+              <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest block">NICKNAME (SITE ALIAS)</label>
+              <input 
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="StarPlayer7"
+                className="w-full bg-[#020617] border border-slate-800 text-white rounded-2xl py-4 px-6 focus:border-[#10b981] outline-none transition-all placeholder:text-slate-700"
                 required
               />
             </div>
