@@ -80,7 +80,7 @@ export const MOCK_BOOKINGS: Booking[] = [
     userId: 'u1',
     userName: 'Rahul Sharma',
     date: '2023-11-20',
-    createdAt: Date.now() - 5 * 60 * 1000, // 5 mins ago
+    createdAt: Date.now() - 5 * 60 * 1000,
     status: 'pending',
     paymentMethod: 'cash'
   },
@@ -94,15 +94,15 @@ export const MOCK_BOOKINGS: Booking[] = [
     userId: 'u2',
     userName: 'Aman Varma',
     date: '2023-11-20',
-    createdAt: Date.now() - 2 * 60 * 1000, // 2 mins ago
+    createdAt: Date.now() - 2 * 60 * 1000,
     status: 'confirmed',
     paymentMethod: 'online'
   }
 ];
 
 export const GARF_BUZZ = [
-  { id: 1, title: 'CASHLESS PAYMENTS', content: 'Swift digital checkouts for seamless booking flow.', tag: 'DIGITAL' },
-  { id: 2, title: 'GAMING MADE EASY', content: 'One-tap reservations for elite gaming stations.', tag: 'SMOOTH' },
-  { id: 3, title: 'EASY ACCESS', content: 'Instant discovery of the best arenas in your neighborhood.', tag: 'ACCESS' },
-  { id: 4, title: 'INSTANT BOOK', content: 'Real-time slot management for turfs and cafes.', tag: 'ELITE' },
+  { id: 1, title: 'CASHLESS PAYMENTS', content: 'Fast, secure digital checkouts for every hub.', tag: 'DIGITAL' },
+  { id: 2, title: 'GAMING MADE EASY', content: 'One-tap reservations for elite gaming sessions.', tag: 'SMOOTH' },
+  { id: 3, title: 'EASY ACCESS', content: 'Find premium turfs and cafes nearby in seconds.', tag: 'ACCESS' },
+  { id: 4, title: 'INSTANT BOOKING', content: 'Real-time slot management for a seamless experience.', tag: 'ELITE' },
 ];

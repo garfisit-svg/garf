@@ -20,7 +20,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
     return matchesSearch;
   });
 
-  // Items for Marquees (multiplied for seamless loop)
+  // Duplicate items for seamless continuous marquee
   const bestSellers = MOCK_HUBS.filter(h => h.isBestSeller || h.rating >= 4.7);
   const marqueeHubs = [...bestSellers, ...bestSellers, ...bestSellers, ...bestSellers];
   const marqueeBuzz = [...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ];
@@ -30,20 +30,20 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
       <Navbar role="user" onLogout={onLogout} onNavigateHome={onNavigateHome} />
 
       <main className="max-w-[1600px] mx-auto py-8">
-        {/* 1. Search Hero Section */}
+        {/* 1. Refined Search Hero Section */}
         <section className="px-6 mb-16">
-          <div className="relative w-full rounded-[60px] overflow-hidden min-h-[450px] flex flex-col items-center justify-center text-center p-12 border border-slate-800/30 shadow-2xl">
+          <div className="relative w-full rounded-[60px] overflow-hidden min-h-[480px] flex flex-col items-center justify-center text-center p-12 border border-slate-800/30 shadow-2xl">
             <div className="absolute inset-0 z-0">
               <img 
                 src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2000" 
-                className="w-full h-full object-cover brightness-[0.12] blur-[1px]" 
+                className="w-full h-full object-cover brightness-[0.1] blur-[1px]" 
                 alt="" 
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/95 via-transparent to-[#020617]"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617]"></div>
             </div>
 
-            <div className="relative z-10 space-y-6 w-full max-w-4xl">
-              <div className="space-y-4 mb-10">
+            <div className="relative z-10 space-y-8 w-full max-w-4xl">
+              <div className="space-y-4">
                 <p className="text-[#10b981] text-xs font-black uppercase tracking-[0.5em] animate-pulse">Searching Nearby</p>
                 <h1 className="text-5xl md:text-8xl font-black text-white leading-[0.9] uppercase tracking-tighter">
                   DOMINATE THE<br />
@@ -70,20 +70,20 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
           </div>
         </section>
 
-        {/* 2. Top Tier Marquee - Slightly Rectangles, Continuously Moving */}
-        <section className="mb-14 relative group">
+        {/* 2. Top Tier Marquee - Refined Continuous Movement */}
+        <section className="mb-14 relative overflow-hidden group">
           <div className="px-6 flex items-center gap-3 mb-6">
             <div className="w-1.5 h-6 bg-[#10b981] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
             <h2 className="text-xl font-black uppercase tracking-tight text-white">Top Tier Arenas</h2>
             <div className="h-px flex-1 bg-slate-800/50 ml-4"></div>
           </div>
 
-          <div className="relative overflow-hidden w-full h-[180px]">
-            {/* Gradient Masks for seamless entry/exit */}
+          <div className="relative w-full overflow-hidden h-[180px]">
+            {/* Edge Gradients */}
             <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
             <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
             
-            <div className="flex gap-6 animate-marquee w-max py-2">
+            <div className="flex gap-6 animate-marquee whitespace-nowrap py-2 hover:pause">
               {marqueeHubs.map((hub, idx) => (
                 <div 
                   key={`${hub.id}-${idx}`}
@@ -107,19 +107,19 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
           </div>
         </section>
 
-        {/* 3. Garf Buzz Marquee - Smaller, Continuously Moving */}
+        {/* 3. Garf Buzz Marquee - Smaller & Reverse Continuous */}
         <section className="mb-24 relative overflow-hidden">
           <div className="px-6 flex items-center gap-3 mb-6">
             <div className="w-1.5 h-6 bg-purple-600 rounded-full shadow-[0_0_10px_rgba(147,51,234,0.5)]"></div>
             <h2 className="text-xl font-black uppercase tracking-tight text-white">Garf Buzz</h2>
           </div>
 
-          <div className="relative h-[120px] w-full">
-            {/* Gradient Masks */}
+          <div className="relative w-full h-[120px] overflow-hidden">
+            {/* Edge Gradients */}
             <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none"></div>
             <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none"></div>
             
-            <div className="flex gap-4 animate-marquee-reverse w-max py-2">
+            <div className="flex gap-4 animate-marquee-reverse whitespace-nowrap py-2 hover:pause">
               {marqueeBuzz.map((buzz, idx) => (
                 <div 
                   key={idx}
@@ -137,7 +137,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
           </div>
         </section>
 
-        {/* 4. Static Browse Section */}
+        {/* 4. Browse All Section */}
         <section className="px-6 mb-24">
           <div className="flex items-center justify-between mb-10 border-b border-slate-800 pb-8">
             <div className="flex items-center gap-4">
@@ -203,18 +203,16 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, onHubSelect, on
 
         .animate-marquee {
           animation: marquee 40s linear infinite;
+          width: max-content;
         }
 
         .animate-marquee-reverse {
           animation: marquee 50s linear infinite reverse;
-        }
-
-        .animate-marquee:hover, .animate-marquee-reverse:hover {
-          animation-play-state: paused;
-        }
-
-        .w-max {
           width: max-content;
+        }
+
+        .hover\\:pause:hover {
+          animation-play-state: paused;
         }
       `}</style>
     </div>
