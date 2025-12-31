@@ -13,9 +13,12 @@ interface UserDashboardProps {
   onNavigateHome: () => void;
 }
 
+type SortOption = 'recommended' | 'distance' | 'price' | 'rating';
+
 const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout, onHubSelect, onNavigateHome }) => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'TURF' | 'GAMING CAFE'>('ALL');
+  const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [activeTab, setActiveTab] = useState<'explore' | 'history'>('explore');
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -39,20 +42,23 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
             lng: position.coords.longitude
           });
           setIsLocating(false);
+          setSortBy('distance');
         },
         (error) => {
           console.error("Geolocation Error:", error.message);
           setIsLocating(false);
-          // Silent fail to not disturb user flow, but log it
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        { 
+          enableHighAccuracy: false, 
+          timeout: 20000,            
+          maximumAge: 300000         
+        }
       );
     } else {
       setIsLocating(false);
     }
   };
 
-  // Helper to calculate distance in km
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -80,12 +86,21 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
       return { ...hub, distance };
     })
     .sort((a, b) => {
-      if (userLocation && a.distance !== Infinity && b.distance !== Infinity) {
+      if (sortBy === 'distance' && userLocation) {
         return a.distance - b.distance;
       }
+      if (sortBy === 'price') {
+        return a.priceStart - b.priceStart;
+      }
+      if (sortBy === 'rating') {
+        return b.rating - a.rating;
+      }
+      if (a.isBestSeller && !b.isBestSeller) return -1;
+      if (!a.isBestSeller && b.isBestSeller) return 1;
       return 0;
     });
 
+  // These hubs appear in the featured marquee
   const bestSellers = hubs.filter(h => (h.isBestSeller || h.rating >= 4.7) && !h.isSoldOut);
   const marqueeHubs = [...bestSellers, ...bestSellers, ...bestSellers, ...bestSellers];
   const marqueeBuzz = [...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ];
@@ -121,7 +136,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
         {activeTab === 'explore' ? (
           <>
             <section className="px-6 mb-16">
-              <div className="relative w-full rounded-[60px] overflow-hidden min-h-[440px] flex flex-col items-center justify-center text-center p-12 border border-slate-800/30 shadow-2xl group/hero">
+              <div className="relative w-full rounded-[60px] overflow-hidden min-h-[400px] flex flex-col items-center justify-center text-center p-12 border border-slate-800/30 shadow-2xl group/hero">
                 <div className="absolute inset-0 z-0">
                   <img 
                     src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2000" 
@@ -131,7 +146,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                   <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617]"></div>
                 </div>
 
-                <div className="relative z-10 space-y-8 w-full max-w-4xl">
+                <div className="relative z-10 space-y-6 w-full max-w-4xl">
                   <div className="space-y-4">
                     <div className="flex items-center justify-center gap-2">
                        <span className={`w-2 h-2 rounded-full ${userLocation ? 'bg-emerald-500' : 'bg-slate-600 animate-pulse'}`}></span>
@@ -139,12 +154,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                          {userLocation ? 'PROXIMITY SYNCED' : isLocating ? 'LOCATING AREA...' : 'AWAITING LOCATION'}
                        </p>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black text-white leading-[0.9] uppercase tracking-tighter">
+                    <h1 className="text-4xl md:text-6xl font-black text-white leading-[0.9] uppercase tracking-tighter">
                       DOMINATE THE<br />
                       <span className="bg-gradient-to-r from-[#10b981] via-emerald-400 to-cyan-500 bg-clip-text text-transparent">DIGITAL & DIRT</span>
                     </h1>
-                    <p className="text-slate-400 text-base md:text-lg font-medium max-w-xl mx-auto opacity-70">
-                      Elite venues and high-performance gaming lounges mapped to your exact location.
+                    <p className="text-slate-400 text-sm md:text-base font-medium max-w-lg mx-auto opacity-70">
+                      Elite venues and high-performance gaming lounges mapped to your exact location for instant booking.
                     </p>
                   </div>
 
@@ -157,38 +172,15 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                       placeholder="Search city, area or hub name..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full bg-[#0b1120]/80 backdrop-blur-3xl border border-slate-700/50 rounded-[28px] py-6 pl-16 pr-8 text-white focus:border-[#10b981] focus:ring-4 focus:ring-[#10b981]/10 outline-none transition-all placeholder:text-slate-600 text-lg shadow-2xl"
+                      className="w-full bg-[#0b1120]/80 backdrop-blur-3xl border border-slate-700/50 rounded-[28px] py-5 pl-16 pr-8 text-white focus:border-[#10b981] focus:ring-4 focus:ring-[#10b981]/10 outline-none transition-all placeholder:text-slate-600 text-base shadow-2xl"
                     />
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Filter Options */}
-            <section className="px-6 mb-16">
-              <div className="flex items-center justify-center gap-5">
-                {[
-                  { id: 'ALL', label: 'ALL ARENAS' },
-                  { id: 'TURF', label: 'SPORTS TURFS' },
-                  { id: 'GAMING CAFE', label: 'GAMING HUBS' }
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setFilterType(option.id as any)}
-                    className={`px-10 py-4 rounded-[20px] font-black text-[11px] uppercase tracking-[0.25em] border transition-all duration-300 ${
-                      filterType === option.id 
-                        ? 'bg-[#10b981] border-[#10b981] text-[#020617] shadow-xl shadow-emerald-500/20 translate-y-[-2px]' 
-                        : 'bg-[#0b1120] border-slate-800 text-slate-500 hover:border-slate-600'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Top Tier Marquee */}
-            {marqueeHubs.length > 0 && filterType === 'ALL' && !userLocation && (
+            {/* Top Tier Marquee - NOW ALWAYS APPEARS */}
+            {marqueeHubs.length > 0 && (
               <section className="mb-20 relative overflow-hidden group">
                 <div className="px-6 flex items-center gap-4 mb-8">
                   <div className="w-1.5 h-7 bg-[#10b981] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
@@ -222,6 +214,57 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                 </div>
               </section>
             )}
+
+            {/* Filter & Sort Controls */}
+            <section className="px-6 mb-16 flex flex-col md:flex-row items-center justify-center gap-6">
+              <div className="flex items-center gap-3 bg-[#0b1120]/50 p-1.5 rounded-[22px] border border-slate-800">
+                {[
+                  { id: 'ALL', label: 'ALL ARENAS' },
+                  { id: 'TURF', label: 'TURFS' },
+                  { id: 'GAMING CAFE', label: 'GAMES' }
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setFilterType(option.id as any)}
+                    className={`px-8 py-3 rounded-[18px] font-black text-[10px] uppercase tracking-[0.2em] border transition-all duration-300 ${
+                      filterType === option.id 
+                        ? 'bg-[#10b981] border-[#10b981] text-[#020617]' 
+                        : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="h-8 w-px bg-slate-800 hidden md:block"></div>
+
+              <div className="flex items-center gap-3 bg-[#0b1120]/50 p-1.5 rounded-[22px] border border-slate-800">
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-3">Sort By</span>
+                {[
+                  { id: 'recommended', label: 'Featured' },
+                  { id: 'distance', label: 'Near Me', icon: <MapPinIcon className="w-3 h-3" />, disabled: !userLocation },
+                  { id: 'price', label: 'Price' },
+                  { id: 'rating', label: 'Rating' }
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    disabled={option.disabled}
+                    onClick={() => setSortBy(option.id as any)}
+                    className={`px-6 py-3 rounded-[18px] font-black text-[10px] uppercase tracking-[0.2em] border transition-all duration-300 flex items-center gap-2 ${
+                      sortBy === option.id 
+                        ? 'bg-white border-white text-[#020617]' 
+                        : option.disabled 
+                          ? 'opacity-30 cursor-not-allowed border-transparent text-slate-700' 
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {option.icon}
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </section>
 
             {/* Garf Buzz Horizontal Movement */}
             <section className="mb-24 relative overflow-hidden">
@@ -257,7 +300,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                 <div className="flex items-center gap-5">
                   <div className="w-2.5 h-12 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)]"></div>
                   <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white">
-                    {userLocation ? 'Near Your Area' : filterType === 'ALL' ? 'Available Hubs' : filterType === 'TURF' ? 'Elite Sports Turfs' : 'Cyber Hubs'}
+                    {sortBy === 'distance' ? 'Nearest Arenas' : sortBy === 'price' ? 'Best Deals' : sortBy === 'rating' ? 'Highest Rated' : 'Available Hubs'}
                   </h2>
                 </div>
                 <div className="hidden md:flex flex-col items-end">
@@ -281,7 +324,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                           {hub.type}
                         </span>
                         {userLocation && hub.distance !== Infinity && (
-                          <span className="px-4 py-2 bg-black/80 backdrop-blur-xl text-[#10b981] text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl border border-emerald-500/30">
+                          <span className={`px-4 py-2 bg-black/80 backdrop-blur-xl text-[#10b981] text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl border ${sortBy === 'distance' ? 'border-[#10b981] animate-pulse' : 'border-emerald-500/30'}`}>
                             {hub.distance.toFixed(1)} km
                           </span>
                         )}
@@ -296,7 +339,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                             <span className="text-[12px] font-bold uppercase tracking-widest">{hub.location}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-yellow-500 font-black bg-yellow-500/10 px-4 py-2 rounded-2xl border border-yellow-500/10">
+                        <div className={`flex items-center gap-1.5 font-black px-4 py-2 rounded-2xl border transition-all ${sortBy === 'rating' ? 'bg-yellow-500 text-[#020617] border-yellow-400' : 'text-yellow-500 bg-yellow-500/10 border-yellow-500/10'}`}>
                           <StarIcon className="w-4 h-4" />
                           <span className="text-lg">{hub.rating}</span>
                         </div>
@@ -305,7 +348,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ hubs, bookings, onLogout,
                       <div className="flex items-center justify-between pt-8 border-t border-slate-800/80">
                         <div>
                           <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1.5">Starting From</p>
-                          <p className="text-3xl font-black text-white">₹{hub.priceStart}</p>
+                          <p className={`text-3xl font-black transition-all ${sortBy === 'price' ? 'text-emerald-400 scale-110 origin-left' : 'text-white'}`}>₹{hub.priceStart}</p>
                         </div>
                         <div className={`w-14 h-14 rounded-[20px] border flex items-center justify-center transition-all duration-300 shadow-inner ${hub.isSoldOut ? 'bg-slate-800 border-slate-700 text-slate-600' : 'bg-slate-900 border-slate-800 group-hover:bg-[#10b981] group-hover:text-[#020617] group-hover:border-transparent group-hover:scale-110'}`}>
                           <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
