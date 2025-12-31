@@ -15,6 +15,8 @@ export const MOCK_HUBS: Hub[] = [
     description: 'Premier 5-a-side football turf with FIFA quality artificial grass.',
     amenities: ['Parking', 'Drinking Water', 'Washroom', 'Floodlights'],
     isBestSeller: true,
+    contactPhone: '+91 9876543210',
+    contactEmail: 'contact@arenaone.com',
     slots: [
       { id: 's1', time: '16:00', price: 1200, available: true },
       { id: 's2', time: '17:00', price: 1200, available: true },
@@ -35,6 +37,8 @@ export const MOCK_HUBS: Hub[] = [
     description: 'High-performance gaming PC lounge with latest RTX graphics cards.',
     amenities: ['Fiber Internet', 'Snacks', 'AC', 'PS5 Zone'],
     isBestSeller: true,
+    contactPhone: '+91 8888877777',
+    contactEmail: 'play@cyberzone.in',
     slots: [],
     accessories: [
       {
@@ -70,6 +74,8 @@ export const MOCK_HUBS: Hub[] = [
     description: 'Rooftop multisport facility for cricket and football.',
     amenities: ['Equipment Rental', 'First Aid', 'Refreshments'],
     isBestSeller: false,
+    contactPhone: '+91 7776665554',
+    contactEmail: 'info@starlight.co.in',
     slots: [
       { id: 's9', time: '09:00', price: 1000, available: true },
     ]

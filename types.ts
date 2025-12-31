@@ -31,6 +31,8 @@ export interface Hub {
   accessories?: Accessory[]; // For Gaming Cafes
   isBestSeller?: boolean;
   isSoldOut?: boolean;
+  contactPhone?: string;
+  contactEmail?: string;
 }
 
 export interface Booking {

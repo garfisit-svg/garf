@@ -30,6 +30,8 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
   const [address, setAddress] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   
   const [turfSlots, setTurfSlots] = useState<SlotData[]>([
     { id: 'ts1', start: '16:00', end: '17:00', price: '1200' }
@@ -50,6 +52,8 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       setAddress(hubToEdit.location);
       setImageUrl(hubToEdit.image);
       setDescription(hubToEdit.description);
+      setContactPhone(hubToEdit.contactPhone || '');
+      setContactEmail(hubToEdit.contactEmail || '');
       
       if (hubToEdit.type === 'TURF') {
         setTurfSlots(hubToEdit.slots.map(s => ({
@@ -122,8 +126,8 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
   };
 
   const handleLaunch = () => {
-    if (!venueName || !address) {
-      alert("Please enter venue name and location.");
+    if (!venueName || !address || !contactPhone || !contactEmail) {
+      alert("Please fill in all identity and contact details.");
       return;
     }
 
@@ -158,7 +162,9 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       amenities: hubToEdit?.amenities || ['Parking', 'Drinking Water', 'Floodlights'],
       slots: hubType === 'TURF' ? finalSlots : [],
       accessories: hubType === 'GAMING CAFE' ? finalAccessories : undefined,
-      isBestSeller: hubToEdit?.isBestSeller || false
+      isBestSeller: hubToEdit?.isBestSeller || false,
+      contactPhone,
+      contactEmail
     };
 
     onSave(newHub);
@@ -170,47 +176,112 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       
       <main className="max-w-6xl mx-auto px-6 py-12">
         <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] overflow-hidden shadow-2xl flex flex-col min-h-[80vh]">
-          <div className="p-12 pb-8">
-            <h1 className="text-6xl font-black text-white tracking-tighter uppercase">
-              {hubToEdit ? 'Edit Hub' : 'Register Hub'}
+          <div className="p-12 pb-8 border-b border-slate-800/50">
+            <h1 className="text-6xl font-black text-white tracking-tighter uppercase mb-2">
+              {hubToEdit ? 'Edit Arena' : 'New Arena Intel'}
             </h1>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Enter comprehensive venue details for public listing</p>
           </div>
           
-          <div className="flex-1 p-12 pt-4 space-y-12 overflow-y-auto max-h-[70vh] no-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-              <div className="space-y-4">
-                <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Venue Name</label>
-                <input type="text" value={venueName} onChange={(e) => setVenueName(e.target.value)} placeholder="Neon Gaming Hub" className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
+          <div className="flex-1 p-12 pt-10 space-y-16 overflow-y-auto max-h-[70vh] no-scrollbar">
+            {/* Section 1: Core Identity */}
+            <section className="space-y-10">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-[#10b981] rounded-full"></div>
+                <h3 className="text-xl font-black uppercase tracking-tight">Core Identity</h3>
               </div>
-              <div className="space-y-4">
-                <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Genre</label>
-                <div className="relative">
-                  <select value={hubType} onChange={(e) => setHubType(e.target.value as any)} className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg appearance-none cursor-pointer">
-                    <option value="TURF" className="bg-[#0b1120]">Sports Turf</option>
-                    <option value="GAMING CAFE" className="bg-[#0b1120]">Gaming Cafe</option>
-                  </select>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                <div className="space-y-4">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Official Venue Name</label>
+                  <input type="text" value={venueName} onChange={(e) => setVenueName(e.target.value)} placeholder="Neon Gaming Hub" className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Venue Type</label>
+                  <div className="relative">
+                    <select value={hubType} onChange={(e) => setHubType(e.target.value as any)} className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg appearance-none cursor-pointer">
+                      <option value="TURF" className="bg-[#0b1120]">Sports Turf</option>
+                      <option value="GAMING CAFE" className="bg-[#0b1120]">Gaming Cafe</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-4 col-span-full">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Full Address & Location</label>
+                  <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. 123 Cyber St, Mumbai, Maharashtra" className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
                 </div>
               </div>
-              <div className="space-y-4">
-                <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Location Address</label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Mumbai, Maharashtra" className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
-              </div>
-              <div className="space-y-4">
-                <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Image URL</label>
-                <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://unsplash..." className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
-              </div>
-            </div>
+            </section>
 
-            <div className="pt-8 space-y-8 pb-12">
+            {/* Section 2: Contact & Reach */}
+            <section className="space-y-10 bg-[#020617]/20 p-10 rounded-[40px] border border-slate-800/30">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                <h3 className="text-xl font-black uppercase tracking-tight">Business Contact Intel</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                <div className="space-y-4">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Official Phone No.</label>
+                  <input 
+                    type="tel" 
+                    value={contactPhone} 
+                    onChange={(e) => setContactPhone(e.target.value)} 
+                    placeholder="+91 00000 00000" 
+                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-blue-500 transition-all text-white font-semibold text-lg" 
+                  />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Official Business Email</label>
+                  <input 
+                    type="email" 
+                    value={contactEmail} 
+                    onChange={(e) => setContactEmail(e.target.value)} 
+                    placeholder="contact@venue.com" 
+                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-blue-500 transition-all text-white font-semibold text-lg" 
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Section 3: Visuals & Narrative */}
+            <section className="space-y-10">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-purple-500 rounded-full"></div>
+                <h3 className="text-xl font-black uppercase tracking-tight">Visuals & Branding</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                <div className="space-y-4">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Hero Image URL</label>
+                  <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://unsplash..." className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
+                </div>
+                <div className="space-y-4 col-span-full">
+                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Arena Description</label>
+                  <textarea 
+                    rows={4} 
+                    value={description} 
+                    onChange={(e) => setDescription(e.target.value)} 
+                    placeholder="Describe the elite experience at your venue..." 
+                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg resize-none" 
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Section 4: Slots & Inventory */}
+            <section className="pt-8 space-y-10">
               <div className="flex items-center justify-between">
-                <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em]">
-                  {hubType === 'TURF' ? 'Turf Time Slots' : 'Accessories & Gear Management'}
-                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                  <h3 className="text-xl font-black uppercase tracking-tight">
+                    {hubType === 'TURF' ? 'Time Slot Architecture' : 'Gear & Inventory Management'}
+                  </h3>
+                </div>
                 <button 
                   onClick={hubType === 'TURF' ? addTurfSlot : addAccessory} 
                   className="bg-[#10b981]/10 text-[#10b981] px-6 py-3 rounded-xl border border-[#10b981]/30 font-black text-[10px] uppercase tracking-widest hover:bg-[#10b981] hover:text-[#020617] transition-all"
                 >
-                  {hubType === 'TURF' ? '+ New Turf Slot' : '+ New Accessory Unit'}
+                  {hubType === 'TURF' ? '+ New Time Slot' : '+ New Gear Unit'}
                 </button>
               </div>
 
@@ -320,13 +391,13 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           </div>
 
           <div className="p-12 bg-slate-900/10 border-t border-slate-800 flex gap-6 mt-auto">
-            <button onClick={onBack} className="flex-1 py-7 bg-transparent border border-slate-800 text-slate-400 font-black rounded-[32px] hover:bg-slate-800/50 hover:text-white transition-all uppercase tracking-[0.25em] text-sm">Discard</button>
+            <button onClick={onBack} className="flex-1 py-7 bg-transparent border border-slate-800 text-slate-400 font-black rounded-[32px] hover:bg-slate-800/50 hover:text-white transition-all uppercase tracking-[0.25em] text-sm">Discard Changes</button>
             <button onClick={handleLaunch} className="flex-[2] py-7 bg-[#10b981] hover:bg-[#34d399] text-[#020617] font-black rounded-[32px] transition-all shadow-[0_8px_32px_rgba(16,185,129,0.3)] uppercase tracking-[0.25em] text-sm">
-              {hubToEdit ? 'Save Changes' : 'Launch Hub'}
+              {hubToEdit ? 'Save Data' : 'Launch Listing'}
             </button>
           </div>
         </div>

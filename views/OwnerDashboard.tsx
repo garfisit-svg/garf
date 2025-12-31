@@ -29,6 +29,56 @@ const ArrivalTimer: React.FC<{ createdAt: number }> = ({ createdAt }) => {
   );
 };
 
+// Custom SVG Line Graph Component for Analytics
+const PerformanceGraph: React.FC = () => {
+  return (
+    <div className="relative w-full h-[300px] mt-10">
+      <svg viewBox="0 0 800 300" className="w-full h-full">
+        {/* Grid Lines */}
+        {[0, 1, 2, 3].map((i) => (
+          <line 
+            key={i} 
+            x1="0" y1={i * 100} x2="800" y2={i * 100} 
+            stroke="#1e293b" strokeWidth="1" strokeDasharray="4 4" 
+          />
+        ))}
+        
+        {/* Area Gradient */}
+        <defs>
+          <linearGradient id="graphGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* The Path */}
+        <path 
+          d="M0,250 Q100,200 200,220 T400,100 T600,150 T800,50 L800,300 L0,300 Z" 
+          fill="url(#graphGradient)" 
+        />
+        <path 
+          d="M0,250 Q100,200 200,220 T400,100 T600,150 T800,50" 
+          fill="none" stroke="#10b981" strokeWidth="4" 
+          strokeLinecap="round" strokeLinejoin="round"
+          className="drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+        />
+
+        {/* Data Points */}
+        {[
+          { x: 200, y: 220 }, { x: 400, y: 100 }, { x: 600, y: 150 }, { x: 800, y: 50 }
+        ].map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="6" fill="#10b981" className="animate-pulse" />
+        ))}
+      </svg>
+      
+      {/* Labels */}
+      <div className="flex justify-between mt-4 text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+      </div>
+    </div>
+  );
+};
+
 interface OwnerDashboardProps {
   hubs: Hub[];
   onLogout: () => void;
@@ -89,8 +139,12 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, onLogout, onAddHu
         {activeTab === 'arrivals' && (
           <div className="grid gap-6">
             {bookings.length === 0 ? (
-              <div className="text-center py-20 bg-[#0b1120] border border-dashed border-slate-800 rounded-[40px]">
-                <p className="text-slate-600 font-black uppercase tracking-widest">No Incoming Traffic Detected</p>
+              <div className="flex flex-col items-center justify-center py-32 bg-[#0b1120] border border-dashed border-slate-800 rounded-[60px] text-center">
+                <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 animate-pulse border border-slate-800">
+                  <svg className="w-8 h-8 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h3 className="text-2xl font-black text-slate-400 uppercase tracking-tighter">No Live Arrivals</h3>
+                <p className="text-slate-600 font-bold text-xs uppercase tracking-widest mt-2">System monitoring for incoming traffic...</p>
               </div>
             ) : (
               bookings.map(b => (
@@ -135,15 +189,38 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, onLogout, onAddHu
         )}
 
         {activeTab === 'analytics' && (
-          <div className="grid lg:grid-cols-2 gap-8">
-            <div className="bg-[#0b1120] border border-slate-800 rounded-[40px] p-10">
-               <h3 className="text-xl font-black uppercase mb-8 tracking-tighter">Performance Matrix</h3>
-               <div className="mt-8 grid grid-cols-4 gap-4 text-center">
-                  <div><p className="text-2xl font-black">₹{hubs.length * 15}k</p><p className="text-[10px] text-slate-500 uppercase font-bold">Rev Forecast</p></div>
-                  <div><p className="text-2xl font-black text-emerald-400">+{hubs.length}%</p><p className="text-[10px] text-slate-500 uppercase font-bold">Growth</p></div>
-                  <div><p className="text-2xl font-black">{hubs.length * 12}</p><p className="text-[10px] text-slate-500 uppercase font-bold">Bookings</p></div>
-                  <div><p className="text-2xl font-black">4.9</p><p className="text-[10px] text-slate-500 uppercase font-bold">Avg Rating</p></div>
-               </div>
+          <div className="space-y-10">
+            {/* Main Graph Card */}
+            <div className="bg-[#0b1120] border border-slate-800 rounded-[50px] p-12 shadow-2xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[120px] pointer-events-none"></div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2">Real-time Performance</p>
+                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Revenue Forecast</h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-4xl font-black text-white">₹{hubs.length * 12}.4k</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total 7-Day Net</p>
+                </div>
+              </div>
+              
+              <PerformanceGraph />
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { label: 'Booking Velocity', val: '1.2h', sub: 'Avg per unit', color: 'emerald' },
+                { label: 'Occupancy Rate', val: '84%', sub: 'Peak performance', color: 'blue' },
+                { label: 'Cust. Retention', val: '62%', sub: 'Repeat business', color: 'purple' },
+                { label: 'Market Position', val: '#12', sub: 'City ranking', color: 'orange' }
+              ].map((m, i) => (
+                <div key={i} className="bg-[#0b1120] border border-slate-800 rounded-[32px] p-8 hover:border-slate-600 transition-all">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">{m.label}</p>
+                  <h4 className="text-4xl font-black text-white mb-1">{m.val}</h4>
+                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{m.sub}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -151,9 +228,13 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, onLogout, onAddHu
         {activeTab === 'management' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             {hubs.length === 0 ? (
-              <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-[40px]">
-                <p className="text-slate-600 font-black uppercase tracking-widest">No Venues Registered Yet</p>
-                <button onClick={onAddHub} className="mt-4 text-[#10b981] font-black uppercase tracking-widest hover:underline">+ Launch First Venue</button>
+              <div className="col-span-full flex flex-col items-center justify-center py-40 bg-[#0b1120] border border-dashed border-slate-800 rounded-[60px] text-center">
+                <div className="w-24 h-24 bg-[#020617] rounded-full flex items-center justify-center mb-8 border border-slate-800 group-hover:border-[#10b981] transition-all">
+                  <svg className="w-10 h-10 text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+                <h3 className="text-3xl font-black text-slate-500 uppercase tracking-tighter">Fleet Unregistered</h3>
+                <p className="text-slate-600 font-bold text-sm uppercase tracking-widest mt-3 mb-8">Deploy your first arena to begin monitoring</p>
+                <button onClick={onAddHub} className="px-8 py-4 bg-[#10b981] text-[#020617] font-black rounded-2xl uppercase text-xs tracking-widest hover:scale-105 transition-all">+ Launch Initial Venue</button>
               </div>
             ) : (
               hubs.map(hub => (
