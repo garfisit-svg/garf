@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { GARF_BUZZ } from '../constants';
@@ -145,7 +144,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     } else if (type === 'TIME') {
       setPollOptions(['8 PM', '9 PM', '10 PM']);
     } else if (type === 'AVAIL') {
-      setPollOptions(['I\'m In!', 'Maybe', 'Skip']);
+      setPollOptions(["I'm In!", 'Maybe', 'Skip']);
     }
   };
 
@@ -179,12 +178,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col overflow-x-hidden">
       <Navbar role="user" onLogout={onLogout} onNavigateHome={onNavigateHome} />
 
-      <main className="max-w-[1600px] mx-auto py-4 md:py-8">
+      <main className="max-w-[1600px] w-full mx-auto py-4 md:py-8 flex-1 flex flex-col">
         {/* Navigation Tabs - Horizontal Scroll on Mobile */}
-        <div className="px-4 md:px-6 mb-8 md:mb-12 flex justify-start md:justify-center overflow-x-auto no-scrollbar">
+        <div className="px-4 md:px-6 mb-8 md:mb-12 flex justify-start md:justify-center overflow-x-auto no-scrollbar shrink-0">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[28px] p-1.5 md:p-2 flex gap-1 shadow-2xl shrink-0">
             {[
               { id: 'explore', label: 'Explore' },
@@ -205,57 +204,58 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         </div>
 
         {activeTab === 'explore' && (
-          <div className="space-y-8 md:space-y-12 animate-in fade-in duration-700">
+          <div className="space-y-10 md:space-y-16 animate-in fade-in duration-700">
             {/* Hero Section */}
             <section className="px-4 md:px-6">
-              <div className="relative w-full rounded-[40px] md:rounded-[60px] overflow-hidden min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center text-center p-8 md:p-12 border border-slate-800/30 shadow-2xl">
+              <div className="relative w-full rounded-[40px] md:rounded-[60px] overflow-hidden min-h-[380px] md:min-h-[440px] flex flex-col items-center justify-center text-center p-8 md:p-12 border border-slate-800/30 shadow-2xl">
                 <div className="absolute inset-0 z-0">
                   <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover brightness-[0.05] blur-[1px]" alt="" />
                   <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617]"></div>
                 </div>
-                <div className="relative z-10 space-y-4 md:space-y-6 w-full max-w-4xl">
-                  <div className="space-y-3 md:space-y-4">
-                    <div className="flex items-center justify-center gap-2 md:gap-3 mb-2">
+                <div className="relative z-10 space-y-6 md:space-y-8 w-full max-w-4xl">
+                  <div className="space-y-4 md:space-y-6">
+                    <div className="flex items-center justify-center gap-2 md:gap-3">
                        <span className={`w-2 h-2 rounded-full ${userLocation ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]' : 'bg-slate-700 animate-pulse'}`}></span>
                        <p className="text-emerald-400 text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em]">Searching Nearby</p>
                     </div>
-                    <h1 className="text-3xl md:text-7xl font-black text-white leading-[0.9] uppercase tracking-tighter">
+                    <h1 className="text-3xl md:text-7xl font-black text-white leading-[1.0] md:leading-[0.9] uppercase tracking-tighter">
                       DOMINATE THE<br />
                       <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent italic">DIGITAL & DIRT</span>
                     </h1>
+                    {/* Restored Tagline */}
                     <p className="text-slate-400 text-[10px] md:text-sm font-black uppercase tracking-[0.2em] max-w-2xl mx-auto opacity-80">
                       Real-time bookings for elite sports turfs and next-gen gaming cafes.
                     </p>
                   </div>
-                  <div className="relative group w-full max-w-2xl mx-auto mt-2 md:mt-4">
-                    <div className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 pointer-events-none"><SearchIcon className="w-5 h-5 md:w-6 md:h-6 text-emerald-400" /></div>
-                    <input type="text" placeholder="Search elite hubs..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-[#0b1120]/60 backdrop-blur-3xl border border-slate-700/50 rounded-[20px] md:rounded-[28px] py-4 md:py-5 pl-12 md:pl-16 pr-6 md:pr-8 text-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-700 shadow-2xl text-sm md:text-base font-bold" />
+                  <div className="relative group w-full max-w-2xl mx-auto mt-4">
+                    <div className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 pointer-events-none transition-transform group-focus-within:scale-110"><SearchIcon className="w-5 h-5 md:w-6 md:h-6 text-emerald-400" /></div>
+                    <input type="text" placeholder="Search elite hubs, areas or proximity..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-[#0b1120]/60 backdrop-blur-3xl border border-slate-700/50 rounded-[24px] md:rounded-[28px] py-4 md:py-5 pl-14 md:pl-16 pr-6 md:pr-8 text-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-700 shadow-2xl text-sm md:text-base font-bold" />
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Top Rated Arenas Marquee */}
+            {/* Top Rated Arenas Marquee (Restored) */}
             <section className="space-y-4">
               <div className="px-6 md:px-10 flex items-center justify-between">
-                <h3 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.4em] md:tracking-[0.5em]">Top Rated Arenas</h3>
-                <div className="h-px flex-1 mx-4 md:mx-6 bg-slate-800/50"></div>
-                <span className="text-[8px] md:text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/5 px-2 md:px-3 py-1 rounded-full border border-emerald-500/10">Elite Selection</span>
+                <h3 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.5em]">Top Rated Arenas</h3>
+                <div className="h-px flex-1 mx-6 bg-slate-800/50"></div>
+                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">Elite Choice</span>
               </div>
               <div className="relative overflow-hidden py-2">
-                <div className="flex gap-4 md:gap-8 animate-marquee-fast">
-                  {[...topRatedHubs, ...topRatedHubs].map((hub, idx) => (
-                    <div key={`${hub.id}-${idx}`} onClick={() => onHubSelect(hub)} className="flex-shrink-0 w-[260px] md:w-[320px] bg-[#0b1120] border border-slate-800 rounded-[24px] md:rounded-[28px] overflow-hidden group cursor-pointer hover:border-emerald-500 transition-all shadow-lg">
-                      <div className="h-32 md:h-40 relative overflow-hidden">
+                <div className="flex gap-6 md:gap-8 animate-marquee-fast">
+                  {[...topRatedHubs, ...topRatedHubs, ...topRatedHubs].map((hub, idx) => (
+                    <div key={`${hub.id}-${idx}`} onClick={() => onHubSelect(hub)} className="flex-shrink-0 w-[260px] md:w-[320px] bg-[#0b1120] border border-slate-800 rounded-[28px] overflow-hidden group cursor-pointer hover:border-emerald-500 transition-all shadow-lg">
+                      <div className="h-36 md:h-40 relative overflow-hidden">
                         <img src={hub.images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
-                        <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-black/60 backdrop-blur-xl px-1.5 md:px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1">
-                          <StarIcon className="w-2.5 md:w-3 md:h-3 text-yellow-400" />
-                          <span className="text-[10px] md:text-xs font-black text-white">{hub.rating}</span>
+                        <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-xl px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
+                          <StarIcon className="w-3 h-3 text-yellow-400" />
+                          <span className="text-xs font-black text-white">{hub.rating}</span>
                         </div>
                       </div>
                       <div className="p-4 md:p-5">
-                        <h4 className="text-xs md:text-sm font-black text-white uppercase truncate group-hover:text-emerald-400 transition-colors">{hub.name}</h4>
-                        <p className="text-[8px] md:text-[9px] font-bold text-slate-600 uppercase tracking-widest">{hub.location}</p>
+                        <h4 className="text-sm font-black text-white uppercase truncate group-hover:text-emerald-400 transition-colors">{hub.name}</h4>
+                        <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">{hub.location}</p>
                       </div>
                     </div>
                   ))}
@@ -263,28 +263,28 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
             </section>
 
-            {/* Garf Buzz */}
+            {/* Garf Buzz Marquee (Restored) */}
             <section className="space-y-4">
               <div className="px-6 md:px-10 flex items-center justify-between">
-                <h3 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.4em] md:tracking-[0.5em]">Garf Buzz</h3>
-                <div className="h-px flex-1 mx-4 md:mx-6 bg-slate-800/50"></div>
+                <h3 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.5em]">Garf Buzz</h3>
+                <div className="h-px flex-1 mx-6 bg-slate-800/50"></div>
               </div>
               <div className="relative overflow-hidden">
                 <div className="flex gap-4 md:gap-6 animate-marquee whitespace-nowrap py-1">
-                  {[...GARF_BUZZ, ...GARF_BUZZ].map((buzz, idx) => (
-                    <div key={idx} className="flex-shrink-0 bg-[#0b1120]/50 border border-slate-800 rounded-[16px] md:rounded-[20px] p-3 md:p-4 w-[240px] md:w-[280px] flex flex-col justify-center group hover:border-emerald-500/30 transition-all">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[7px] md:text-[8px] font-black uppercase tracking-widest">{buzz.tag}</span>
-                        <h4 className="text-[10px] md:text-[11px] font-black text-white uppercase truncate group-hover:text-emerald-400 transition-colors">{buzz.title}</h4>
+                  {[...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ].map((buzz, idx) => (
+                    <div key={idx} className="flex-shrink-0 bg-[#0b1120]/50 border border-slate-800 rounded-[20px] p-4 w-[240px] md:w-[280px] flex flex-col justify-center group hover:border-emerald-500/30 transition-all">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[8px] font-black uppercase tracking-widest">{buzz.tag}</span>
+                        <h4 className="text-[11px] font-black text-white uppercase truncate group-hover:text-emerald-400 transition-colors">{buzz.title}</h4>
                       </div>
-                      <p className="text-[8px] md:text-[9px] text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{buzz.content}</p>
+                      <p className="text-[9px] text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{buzz.content}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </section>
 
-            {/* Tactical Control Bar - Mobile Scrollable Filters */}
+            {/* Tactical Control Bar */}
             <section className="px-4 md:px-6">
               <div className="bg-[#0b1120] border border-slate-800 rounded-[28px] md:rounded-[32px] p-4 md:p-6 flex flex-col lg:flex-row items-center justify-between gap-4 md:gap-6 shadow-xl">
                 <div className="flex gap-2 p-1 bg-[#020617] rounded-[18px] md:rounded-[20px] border border-slate-800 w-full lg:w-auto overflow-x-auto no-scrollbar shrink-0">
@@ -292,22 +292,22 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     <button
                       key={f}
                       onClick={() => setFilterType(f as any)}
-                      className={`px-4 md:px-7 py-2.5 md:py-3 rounded-[14px] md:rounded-[16px] font-black text-[9px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all duration-300 whitespace-nowrap ${
+                      className={`px-6 md:px-7 py-2.5 md:py-3 rounded-[14px] md:rounded-[16px] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${
                         filterType === f ? 'bg-[#10b981] text-[#020617] shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-slate-300'
                       }`}
                     >
-                      {f === 'ALL' ? 'All Hubs' : f === 'TURF' ? 'Pro Turfs' : 'Elite Gaming'}
+                      {f === 'ALL' ? 'All Units' : f === 'TURF' ? 'Pro Turfs' : 'Elite Gaming'}
                     </button>
                   ))}
                 </div>
                 <div className="flex items-center gap-4 md:gap-6 w-full lg:w-auto justify-between md:justify-end">
                   <div className="flex items-center gap-2 md:gap-3">
                     <span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest">Sort By</span>
-                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="bg-[#020617] border border-slate-800 rounded-lg md:rounded-xl px-3 md:px-5 py-2 md:py-2.5 text-[10px] md:text-xs font-black text-white uppercase outline-none cursor-pointer">
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="bg-[#020617] border border-slate-800 rounded-xl px-4 md:px-5 py-2 md:py-2.5 text-[10px] md:text-xs font-black text-white uppercase outline-none cursor-pointer">
                       <option value="recommended">Recommended</option>
-                      <option value="distance">Nearby</option>
-                      <option value="price">Price</option>
-                      <option value="rating">Rating</option>
+                      <option value="distance">Nearby (Radar)</option>
+                      <option value="price">Price (Low-High)</option>
+                      <option value="rating">Top Rated</option>
                     </select>
                   </div>
                 </div>
@@ -315,30 +315,30 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
             </section>
 
             {/* Main Grid */}
-            <section className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 pb-32">
+            <section className="px-4 md:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 pb-32">
               {filteredHubs.map((hub) => (
                 <div key={hub.id} onClick={() => !hub.isSoldOut && onHubSelect(hub)} className={`bg-[#0b1120] border border-slate-800 rounded-[32px] md:rounded-[44px] overflow-hidden group relative transition-all duration-500 shadow-xl ${hub.isSoldOut ? 'opacity-60 grayscale cursor-not-allowed' : 'cursor-pointer hover:border-slate-600 hover:-translate-y-2'}`}>
-                  <div className="h-48 md:h-60 relative overflow-hidden">
+                  <div className="h-52 md:h-60 relative overflow-hidden">
                     <img src={hub.images[0]} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
-                    <div className="absolute top-4 right-4">
-                      <span className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-xl border ${hub.type === 'TURF' ? 'bg-[#10b981]/90 text-[#020617]' : 'bg-blue-600/90 text-white'}`}>{hub.type}</span>
+                    <div className="absolute top-4 right-4 md:top-6 md:right-6">
+                      <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-xl border ${hub.type === 'TURF' ? 'bg-[#10b981]/90 text-[#020617]' : 'bg-blue-600/90 text-white'}`}>{hub.type}</span>
                     </div>
                   </div>
-                  <div className="p-6 md:p-9">
-                    <div className="flex justify-between items-start mb-2">
-                       <h4 className="text-base md:text-xl font-black text-white uppercase truncate pr-3">{hub.name}</h4>
-                       <div className="flex items-center gap-1 bg-slate-900/50 px-2 py-1 md:px-2.5 md:py-1.5 rounded-lg md:rounded-xl border border-slate-800">
-                          <StarIcon className="w-3 md:w-3.5 md:h-3.5 text-yellow-400" />
-                          <span className="text-[10px] md:text-[11px] font-black text-white">{hub.rating}</span>
+                  <div className="p-7 md:p-9">
+                    <div className="flex justify-between items-start mb-3">
+                       <h4 className="text-lg md:text-xl font-black text-white uppercase truncate pr-4">{hub.name}</h4>
+                       <div className="flex items-center gap-1.5 bg-slate-900/50 px-2.5 py-1.5 rounded-xl border border-slate-800">
+                          <StarIcon className="w-3.5 h-3.5 text-yellow-400" />
+                          <span className="text-[11px] font-black text-white">{hub.rating}</span>
                        </div>
                     </div>
                     <div className="flex items-center gap-2 mb-6 md:mb-8">
-                       <MapPinIcon className="w-3 md:w-3.5 md:h-3.5 text-slate-600" />
-                       <p className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase truncate">{hub.location}</p>
+                       <MapPinIcon className="w-3.5 h-3.5 text-slate-600" />
+                       <p className="text-[11px] font-bold text-slate-500 uppercase truncate tracking-wide">{hub.location}</p>
                     </div>
-                    <div className="flex items-center justify-between pt-6 md:pt-8 border-t border-slate-800/80">
-                      <div><p className="text-[8px] md:text-[9px] font-black text-slate-600 uppercase mb-1 tracking-widest">Entry Starts</p><p className="text-2xl md:text-3xl font-black text-white tracking-tighter">₹{hub.priceStart}</p></div>
-                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center group-hover:bg-[#10b981] group-hover:text-[#020617] transition-all"><svg className="w-5 h-5 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></div>
+                    <div className="flex items-center justify-between pt-7 md:pt-8 border-t border-slate-800/80">
+                      <div><p className="text-[9px] font-black text-slate-600 uppercase mb-1 tracking-widest">Starts At</p><p className="text-2xl md:text-3xl font-black text-white tracking-tighter">₹{hub.priceStart}</p></div>
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center group-hover:bg-[#10b981] group-hover:text-[#020617] transition-all"><svg className="w-6 h-6 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></div>
                     </div>
                   </div>
                 </div>
@@ -348,40 +348,47 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         )}
 
         {activeTab === 'community' && (
-          <section className="px-4 md:px-6 h-[75vh] flex flex-col md:grid md:grid-cols-[280px_1fr] gap-4 md:gap-8">
-            {/* Units Sidebar - Horizontal on mobile, vertical on desktop */}
-            <aside className="bg-[#0b1120] border border-slate-800 rounded-[24px] md:rounded-[32px] p-4 md:p-6 flex flex-row md:flex-col gap-3 md:gap-5 overflow-x-auto md:overflow-y-auto no-scrollbar shadow-xl shrink-0">
-              <h3 className="hidden md:block text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] mb-2 px-2">Units</h3>
+          <section className="px-4 md:px-6 flex flex-col flex-1 min-h-[500px] max-h-[calc(100vh-180px)] md:grid md:grid-cols-[280px_1fr] gap-4 md:gap-8 overflow-hidden">
+            {/* Units Scroller - Horizontal on mobile */}
+            <aside className="bg-[#0b1120] border border-slate-800 rounded-[20px] md:rounded-[32px] p-3 md:p-6 flex flex-row md:flex-col gap-3 md:gap-5 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0 shadow-xl">
+              <h3 className="hidden md:block text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] mb-2 px-2">Deployment Units</h3>
               <div className="flex flex-row md:flex-col gap-3">
                 {chatRooms.map(room => (
-                  <button key={room.id} onClick={() => setActiveRoomId(room.id)} className={`flex-shrink-0 w-[200px] md:w-full p-4 md:p-5 rounded-[18px] md:rounded-[24px] text-left transition-all border whitespace-nowrap overflow-hidden ${activeRoomId === room.id ? 'bg-[#10b981] border-[#10b981] text-[#020617]' : 'bg-[#020617] border-slate-800 text-slate-400 hover:border-slate-600'}`}>
+                  <button 
+                    key={room.id} 
+                    onClick={() => setActiveRoomId(room.id)} 
+                    className={`flex-shrink-0 w-[180px] md:w-full p-4 md:p-5 rounded-[16px] md:rounded-[24px] text-left transition-all border whitespace-nowrap overflow-hidden ${activeRoomId === room.id ? 'bg-[#10b981] border-[#10b981] text-[#020617]' : 'bg-[#020617] border-slate-800 text-slate-400 hover:border-slate-600'}`}
+                  >
                     <p className="text-[10px] md:text-xs font-black uppercase truncate">{room.name}</p>
-                    <p className="text-[8px] md:text-[9px] font-bold uppercase opacity-60 truncate">{room.isGlobal ? 'Global Hub' : `CODE: ${room.id.replace('squad-', '')}`}</p>
+                    <p className="text-[8px] md:text-[9px] font-bold uppercase opacity-60 truncate">{room.isGlobal ? 'Main Arena' : `CODE: ${room.id.replace('squad-', '')}`}</p>
                   </button>
                 ))}
               </div>
-              <button onClick={() => setShowSquadModal(true)} className="flex-shrink-0 px-6 md:p-5 md:mt-auto bg-slate-800/10 border border-slate-800 border-dashed rounded-[18px] md:rounded-[24px] text-[10px] font-black uppercase tracking-widest text-emerald-500 whitespace-nowrap">+ Join Squad</button>
+              <button onClick={() => setShowSquadModal(true)} className="flex-shrink-0 px-6 py-3 md:p-5 md:mt-auto bg-slate-800/10 border border-slate-800 border-dashed rounded-[16px] md:rounded-[24px] text-[10px] font-black uppercase tracking-widest text-emerald-500 whitespace-nowrap">+ Join Squad</button>
             </aside>
 
-            {/* Chat Area */}
+            {/* Chat Arena */}
             <div className="flex-1 bg-[#0b1120] border border-slate-800 rounded-[24px] md:rounded-[32px] flex flex-col overflow-hidden relative shadow-xl">
-              <div className="p-4 md:p-8 border-b border-slate-800 flex justify-between items-center bg-[#020617]/40 backdrop-blur-xl z-20">
+              <div className="p-4 md:p-8 border-b border-slate-800 flex justify-between items-center bg-[#020617]/40 backdrop-blur-xl z-20 shrink-0">
                 <div className="flex items-center gap-3 md:gap-4">
-                  <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center font-black text-emerald-500 text-lg md:text-xl">{activeRoom?.name.charAt(0)}</div>
-                  <div><h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tighter truncate max-w-[120px] md:max-w-none">{activeRoom?.name}</h3><p className="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase truncate">{activeRoom?.description}</p></div>
+                  <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center font-black text-emerald-500 text-lg md:text-xl shrink-0">{activeRoom?.name.charAt(0)}</div>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-2xl font-black text-white uppercase tracking-tighter truncate">{activeRoom?.name}</h3>
+                    <p className="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase truncate">{activeRoom?.description}</p>
+                  </div>
                 </div>
-                <button onClick={() => setShowPollCreator(!showPollCreator)} className={`bg-purple-600/10 text-purple-400 border border-purple-600/20 px-4 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${showPollCreator ? 'bg-purple-600 text-white shadow-lg' : ''}`}>Poll</button>
+                <button onClick={() => setShowPollCreator(!showPollCreator)} className={`bg-purple-600/10 text-purple-400 border border-purple-600/20 px-3 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${showPollCreator ? 'bg-purple-600 text-white' : ''}`}>Poll</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 md:space-y-10 no-scrollbar relative">
+              <div className="flex-1 overflow-y-auto p-5 md:p-12 space-y-8 md:space-y-10 no-scrollbar relative">
                 {activeRoom?.messages.map((msg) => (
                   <div key={msg.id} className={`flex flex-col ${msg.senderNickname === nickname ? 'items-end' : 'items-start'} ${msg.isSystem ? 'items-center' : ''}`}>
                     {!msg.isSystem && <p className="text-[8px] md:text-[9px] font-black text-slate-600 uppercase mb-2 px-2">{msg.senderNickname}</p>}
                     {msg.isSystem ? (
-                      <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl md:rounded-2xl px-6 md:px-8 py-2 md:py-3"><p className="text-[9px] md:text-[10px] font-black text-emerald-500 uppercase italic text-center">{msg.text}</p></div>
+                      <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-6 py-2.5"><p className="text-[9px] md:text-[10px] font-black text-emerald-500 uppercase italic text-center">{msg.text}</p></div>
                     ) : msg.type === 'poll' ? (
                       <div className="bg-purple-900/5 border border-purple-500/20 p-6 md:p-10 rounded-[28px] md:rounded-[40px] w-full max-w-sm shadow-inner relative overflow-hidden">
-                        <h4 className="text-base md:text-xl font-black text-white uppercase mb-6 md:mb-8 leading-tight">QS: {msg.poll?.question}</h4>
+                        <h4 className="text-sm md:text-xl font-black text-white uppercase mb-6 md:mb-8 leading-tight">QS: {msg.poll?.question}</h4>
                         <div className="space-y-3 md:space-y-4">
                           {msg.poll?.options.map((opt, idx) => {
                             const totalVotes = msg.poll!.options.reduce((acc, curr) => acc + curr.votes.length, 0);
@@ -406,60 +413,58 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 ))}
                 <div ref={chatEndRef} />
 
-                {/* Poll Architect Overlay */}
+                {/* Poll Architect */}
                 {showPollCreator && (
-                  <div className="absolute inset-x-4 md:inset-x-8 bottom-4 md:bottom-10 bg-[#0b1120] border border-purple-500/40 p-6 md:p-10 rounded-[32px] md:rounded-[44px] shadow-[0_-30px_90px_rgba(0,0,0,0.95)] animate-in slide-in-from-bottom-20 duration-500 z-50 backdrop-blur-2xl max-h-[90%] overflow-y-auto no-scrollbar">
-                    <div className="flex justify-between items-center mb-6 md:mb-8 sticky top-0 bg-[#0b1120]/90 backdrop-blur-md py-2">
+                  <div className="absolute inset-x-4 md:inset-x-8 bottom-4 md:bottom-10 bg-[#0b1120] border border-purple-500/40 p-6 md:p-10 rounded-[32px] md:rounded-[44px] shadow-[0_-30px_90px_rgba(0,0,0,0.95)] animate-in slide-in-from-bottom-20 duration-500 z-50 backdrop-blur-3xl max-h-[92%] overflow-y-auto no-scrollbar">
+                    <div className="flex justify-between items-center mb-6 md:mb-8 sticky top-0 bg-[#0b1120]/95 backdrop-blur-md py-2 z-10">
                       <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter">Poll Architect</h4>
-                      <button onClick={() => setShowPollCreator(false)} className="text-slate-600 hover:text-white transition-colors bg-slate-900/50 p-1.5 md:p-2 rounded-xl border border-slate-800">
+                      <button onClick={() => setShowPollCreator(false)} className="text-slate-600 hover:text-white transition-colors bg-slate-900/50 p-2 rounded-xl border border-slate-800">
                         <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-                      <button onClick={() => handleQuickSet('YESNO')} className="flex flex-col items-center gap-2 md:gap-3 p-4 bg-[#020617]/60 border border-slate-800 rounded-2xl hover:border-purple-500/50 transition-all group">
-                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">YN</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                      <button onClick={() => handleQuickSet('YESNO')} className="flex flex-col items-center gap-2 p-3 bg-[#020617]/60 border border-slate-800 rounded-2xl hover:border-purple-500/50 transition-all group">
+                         <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 font-black text-[10px]">YN</div>
                          <span className="text-[8px] md:text-[9px] font-black uppercase text-slate-500 group-hover:text-white">Yes/No</span>
                       </button>
-                      {/* Fixed: Replaced handleTemplateSelect with handleQuickSet */}
-                      <button onClick={() => handleQuickSet('TIME')} className="flex flex-col items-center gap-2 md:gap-3 p-4 bg-[#020617]/60 border border-slate-800 rounded-2xl hover:border-purple-500/50 transition-all group">
-                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform"><svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                      <button onClick={() => handleQuickSet('TIME')} className="flex flex-col items-center gap-2 p-3 bg-[#020617]/60 border border-slate-800 rounded-2xl hover:border-purple-500/50 transition-all group">
+                         <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                          <span className="text-[8px] md:text-[9px] font-black uppercase text-slate-500 group-hover:text-white">Timing</span>
                       </button>
                     </div>
 
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[9px] md:text-[10px] font-black text-purple-400 uppercase tracking-widest ml-4">QS (Question)</label>
+                        <label className="text-[9px] md:text-[10px] font-black text-purple-400 uppercase tracking-widest ml-4">QS (Tactical Question)</label>
                         <input type="text" placeholder="Squad Directive Question..." value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} className="w-full bg-[#020617]/80 border border-slate-800 rounded-xl md:rounded-2xl py-4 md:py-5 px-6 md:px-8 text-white outline-none focus:border-purple-500 font-bold text-sm md:text-base" />
                       </div>
                       <div className="space-y-4">
                         <div className="flex items-center justify-between ml-4 pr-4">
-                          <label className="text-[9px] md:text-[10px] font-black text-purple-400 uppercase tracking-widest">Options Selection</label>
-                          <button onClick={addPollOption} disabled={pollOptions.length >= 6} className="text-[8px] md:text-[10px] font-black bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 md:px-3 py-1 rounded-md hover:bg-purple-500 hover:text-white transition-all disabled:opacity-30">+ Add</button>
+                          <label className="text-[9px] md:text-[10px] font-black text-purple-400 uppercase tracking-widest">Options Config</label>
+                          <button onClick={addPollOption} disabled={pollOptions.length >= 6} className="text-[8px] md:text-[10px] font-black bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-md hover:bg-purple-500 hover:text-white transition-all disabled:opacity-30">+ Add</button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {pollOptions.map((opt, i) => (
                             <div key={i} className="relative group">
-                              <input type="text" placeholder={`Option ${i+1}`} value={opt} onChange={(e) => { const next = [...pollOptions]; next[i] = e.target.value; setPollOptions(next); }} className="w-full bg-[#020617]/80 border border-slate-800 rounded-lg md:rounded-xl py-3 md:py-4 px-5 md:px-6 text-[10px] md:text-xs text-white outline-none focus:border-purple-500 font-black uppercase tracking-widest pr-10" />
+                              <input type="text" placeholder={`Option ${i+1}`} value={opt} onChange={(e) => { const next = [...pollOptions]; next[i] = e.target.value; setPollOptions(next); }} className="w-full bg-[#020617]/80 border border-slate-800 rounded-lg md:rounded-xl py-3.5 md:py-4 px-5 md:px-6 text-[10px] md:text-xs text-white outline-none focus:border-purple-500 font-black uppercase tracking-widest pr-10" />
                               {pollOptions.length > 2 && (
-                                <button onClick={() => removePollOption(i)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-red-400 transition-colors p-1 md:opacity-0 group-hover:opacity-100"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                <button onClick={() => removePollOption(i)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-700 hover:text-red-400 transition-colors p-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
                               )}
                             </div>
                           ))}
                         </div>
                       </div>
-                      <button onClick={() => handleCreatePoll()} className="w-full py-4 md:py-5 bg-purple-600 text-white font-black rounded-2xl md:rounded-[24px] uppercase text-[10px] md:text-xs tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-purple-500/20 hover:scale-[1.01] transition-all">Broadcast Directive</button>
+                      <button onClick={() => handleCreatePoll()} className="w-full py-4 md:py-5 bg-purple-600 text-white font-black rounded-xl md:rounded-[24px] uppercase text-[10px] md:text-xs tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-purple-500/20 hover:scale-[1.01] transition-all">Broadcast Directive</button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Chat Input */}
-              <form onSubmit={handleSendText} className="p-4 md:p-8 bg-[#020617]/60 border-t border-slate-800 flex gap-3 md:gap-4 backdrop-blur-3xl z-20">
-                <input type="text" placeholder="Type tactical request..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 bg-[#0b1120] border border-slate-800 rounded-[20px] md:rounded-[28px] py-4 md:py-5 px-6 md:px-8 outline-none focus:border-emerald-500 transition-all text-xs md:text-sm font-medium" />
+              <form onSubmit={handleSendText} className="p-4 md:p-8 bg-[#020617]/60 border-t border-slate-800 flex gap-3 md:gap-4 backdrop-blur-3xl z-20 shrink-0">
+                <input type="text" placeholder="Type tactical request..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 bg-[#0b1120] border border-slate-800 rounded-[18px] md:rounded-[28px] py-3.5 md:py-5 px-5 md:px-8 outline-none focus:border-emerald-500 transition-all text-xs md:text-sm font-medium" />
                 <button type="submit" className="w-12 h-12 md:w-16 md:h-16 bg-emerald-500 rounded-xl md:rounded-3xl flex items-center justify-center text-[#020617] shadow-2xl shadow-emerald-500/20 hover:scale-105 transition-all">
-                  <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                  <svg className="w-5 h-5 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 </button>
               </form>
             </div>
