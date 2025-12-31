@@ -108,13 +108,19 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 {displaySlots.length > 0 ? displaySlots.map((slot) => (
                   <button
                     key={slot.id}
+                    disabled={!slot.available}
                     onClick={() => setSelectedSlot(slot)}
-                    className={`p-6 rounded-3xl border transition-all flex flex-col items-center gap-1 ${
-                      selectedSlot?.id === slot.id 
-                        ? 'bg-emerald-500 border-emerald-400 text-[#020617] shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
-                        : 'bg-[#020617] border-slate-800 text-white hover:border-slate-600'
+                    className={`p-6 rounded-3xl border transition-all flex flex-col items-center gap-1 relative overflow-hidden ${
+                      !slot.available 
+                        ? 'bg-slate-900 border-slate-800 opacity-40 cursor-not-allowed' 
+                        : selectedSlot?.id === slot.id 
+                          ? 'bg-emerald-500 border-emerald-400 text-[#020617] shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                          : 'bg-[#020617] border-slate-800 text-white hover:border-slate-600'
                     }`}
                   >
+                    {!slot.available && (
+                      <div className="absolute top-2 right-2 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded-lg uppercase tracking-widest">Booked</div>
+                    )}
                     <span className="text-2xl font-black">{slot.time}</span>
                     <div className="flex items-center gap-1">
                       <span className={`text-[10px] font-black uppercase tracking-widest ${selectedSlot?.id === slot.id ? 'text-[#020617]/70' : 'text-slate-500'}`}>Price</span>

@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { MOCK_BOOKINGS } from '../constants';
 import { Booking, Hub } from '../types';
 
 const ArrivalTimer: React.FC<{ createdAt: number }> = ({ createdAt }) => {
@@ -81,6 +80,8 @@ const PerformanceGraph: React.FC = () => {
 
 interface OwnerDashboardProps {
   hubs: Hub[];
+  bookings: Booking[];
+  onUpdateBookingStatus: (id: string, status: 'confirmed' | 'expired') => void;
   onLogout: () => void;
   onAddHub: () => void;
   onEditHub: (hub: Hub) => void;
@@ -88,13 +89,17 @@ interface OwnerDashboardProps {
   onNavigateHome: () => void;
 }
 
-const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, onLogout, onAddHub, onEditHub, onToggleSoldOut, onNavigateHome }) => {
+const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ 
+  hubs, 
+  bookings, 
+  onUpdateBookingStatus, 
+  onLogout, 
+  onAddHub, 
+  onEditHub, 
+  onToggleSoldOut, 
+  onNavigateHome 
+}) => {
   const [activeTab, setActiveTab] = useState<'management' | 'arrivals' | 'analytics'>('management');
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
-
-  const handleAction = (id: string, status: 'confirmed' | 'expired') => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
-  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
@@ -172,8 +177,8 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, onLogout, onAddHu
                     <div className="flex items-center gap-3">
                       {b.status === 'pending' ? (
                         <>
-                          <button onClick={() => handleAction(b.id, 'confirmed')} className="bg-[#10b981] hover:bg-emerald-400 text-[#020617] px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Confirm</button>
-                          <button onClick={() => handleAction(b.id, 'expired')} className="bg-red-900/20 hover:bg-red-900/40 text-red-500 px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Release</button>
+                          <button onClick={() => onUpdateBookingStatus(b.id, 'confirmed')} className="bg-[#10b981] hover:bg-emerald-400 text-[#020617] px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Confirm</button>
+                          <button onClick={() => onUpdateBookingStatus(b.id, 'expired')} className="bg-red-900/20 hover:bg-red-900/40 text-red-500 px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Release</button>
                         </>
                       ) : (
                         <div className={`px-6 py-3 rounded-xl font-black text-xs uppercase ${b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>

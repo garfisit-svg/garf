@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
 import { UserRole, Hub, Booking } from './types';
-import { MOCK_HUBS, MOCK_BOOKINGS } from './constants';
 import LandingView from './views/LandingView';
 import AuthView from './views/AuthView';
 import UserDashboard from './views/UserDashboard';
 import HubDetailView from './views/HubDetailView';
 import OwnerDashboard from './views/OwnerDashboard';
 import HubRegisterView from './views/HubRegisterView';
+import { MOCK_HUBS } from './constants';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'auth' | 'user' | 'owner' | 'hub-detail' | 'hub-register'>('landing');
@@ -15,10 +15,12 @@ const App: React.FC = () => {
   const [selectedHub, setSelectedHub] = useState<Hub | null>(null);
   const [editingHub, setEditingHub] = useState<Hub | null>(null);
   
-  // Dynamic Hub state
+  // Initialize with dummy data for user browsing
   const [hubs, setHubs] = useState<Hub[]>(MOCK_HUBS);
-  // Dynamic Bookings state
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
+  // We track user-created IDs to differentiate from MOCK_HUBS in the owner panel
+  const [ownerHubIds, setOwnerHubIds] = useState<Set<string>>(new Set());
 
   const handleStartAuth = (role: UserRole) => {
     setAuthType(role);
@@ -69,6 +71,7 @@ const App: React.FC = () => {
       }
       return [newHub, ...prev];
     });
+    setOwnerHubIds(prev => new Set(prev).add(newHub.id));
     setView('owner');
     setEditingHub(null);
   };
@@ -84,10 +87,75 @@ const App: React.FC = () => {
       createdAt: Date.now(),
       status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed',
       userId: 'u-current',
-      userName: 'Current User', // Mock name
+      userName: 'Current User',
     };
+
     setBookings(prev => [newBooking, ...prev]);
+
+    // Lock the slot in the hub data
+    setHubs(prevHubs => prevHubs.map(hub => {
+      if (hub.id === bookingData.hubId) {
+        if (hub.type === 'TURF') {
+          return {
+            ...hub,
+            slots: hub.slots.map(s => s.id === bookingData.slotId ? { ...s, available: false } : s)
+          };
+        } else {
+          return {
+            ...hub,
+            accessories: hub.accessories?.map(acc => {
+              if (acc.name === bookingData.accessoryName) {
+                return {
+                  ...acc,
+                  slots: acc.slots.map(s => s.id === bookingData.slotId ? { ...s, available: false } : s)
+                };
+              }
+              return acc;
+            })
+          };
+        }
+      }
+      return hub;
+    }));
   };
+
+  const handleUpdateBookingStatus = (id: string, status: 'confirmed' | 'expired') => {
+    const bookingToUpdate = bookings.find(b => b.id === id);
+    
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+
+    // If a booking is released/expired, make the slot available again
+    if (status === 'expired' && bookingToUpdate) {
+      setHubs(prevHubs => prevHubs.map(hub => {
+        if (hub.id === bookingToUpdate.hubId) {
+          if (hub.type === 'TURF') {
+            return {
+              ...hub,
+              slots: hub.slots.map(s => s.id === bookingToUpdate.slotId ? { ...s, available: true } : s)
+            };
+          } else {
+            return {
+              ...hub,
+              accessories: hub.accessories?.map(acc => {
+                if (acc.name === bookingToUpdate.accessoryName) {
+                  return {
+                    ...acc,
+                    slots: acc.slots.map(s => s.id === bookingToUpdate.slotId ? { ...s, available: true } : s)
+                  };
+                }
+                return acc;
+              })
+            };
+          }
+        }
+        return hub;
+      }));
+    }
+  };
+
+  // Filter for Owner: only hubs they created and arrivals for those hubs
+  const ownerHubs = hubs.filter(h => ownerHubIds.has(h.id));
+  const ownerArrivals = bookings.filter(b => ownerHubIds.has(b.hubId));
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100">
@@ -104,7 +172,7 @@ const App: React.FC = () => {
       )}
       {view === 'hub-detail' && selectedHub && (
         <HubDetailView 
-          hub={selectedHub} 
+          hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} 
           onBack={handleBack} 
           role={authType} 
           onLogout={handleLogout}
@@ -113,7 +181,9 @@ const App: React.FC = () => {
       )}
       {view === 'owner' && (
         <OwnerDashboard 
-          hubs={hubs}
+          hubs={ownerHubs}
+          bookings={ownerArrivals}
+          onUpdateBookingStatus={handleUpdateBookingStatus}
           onLogout={handleLogout} 
           onAddHub={handleAddHub}
           onEditHub={handleEditHub}
