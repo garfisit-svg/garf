@@ -1,9 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 
-// These variables must be set in your Environment Variables on Vercel or your hosting provider.
-// We provide a fallback string to prevent the "supabaseUrl is required" crash during initialization
-// if the environment variables haven't been configured yet.
-const supabaseUrl = (process.env as any).NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-please-set-your-url.supabase.co';
-const supabaseAnonKey = (process.env as any).NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-please-set-your-anon-key';
+/**
+ * Safely retrieves environment variables.
+ * In some browser environments, 'process' or 'process.env' might be undefined.
+ */
+const getSafeEnv = (key: string): string | undefined => {
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      return (process.env as any)[key];
+    }
+  } catch (e) {
+    // Silently fail and return undefined if process is inaccessible
+  }
+  return undefined;
+};
 
+// Fallback values allow the app to boot even if keys aren't configured yet.
+const supabaseUrl = getSafeEnv('NEXT_PUBLIC_SUPABASE_URL') || 'https://placeholder-project.supabase.co';
+const supabaseAnonKey = getSafeEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') || 'placeholder-key';
+
+// Initialize the client. The fallback URL prevents the "supabaseUrl is required" error.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+/**
+ * Helper to check if we are in demo mode (using placeholder keys)
+ */
+export const isDemoMode = () => {
+  return supabaseUrl.includes('placeholder-project');
+};

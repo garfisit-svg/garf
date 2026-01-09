@@ -7,7 +7,7 @@ import HubDetailView from './views/HubDetailView';
 import OwnerDashboard from './views/OwnerDashboard';
 import HubRegisterView from './views/HubRegisterView';
 import { getAIScoutResponse } from './services/aiService';
-import { supabase } from './services/supabase';
+import { supabase, isDemoMode } from './services/supabase';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'auth' | 'user' | 'owner' | 'hub-detail' | 'hub-register'>('landing');
@@ -45,11 +45,10 @@ const App: React.FC = () => {
   // REAL DATA FETCHING
   useEffect(() => {
     const fetchData = async () => {
-      // If using placeholder keys, we skip fetching to avoid repeated console errors
-      // @ts-ignore - access to protected property for check
-      if (supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+      // If in demo mode, skip fetching and use empty states (or you could load mock data here)
+      if (isDemoMode()) {
         setIsLoading(false);
-        console.warn("Supabase keys not detected. Running in offline/demo mode.");
+        console.warn("Supabase keys not detected. App running in restricted Demo Mode.");
         return;
       }
 
@@ -57,7 +56,6 @@ const App: React.FC = () => {
       setError(null);
       
       try {
-        // Fetch Hubs from Supabase
         const { data: hubsData, error: hubsError } = await supabase
           .from('hubs')
           .select('*');
@@ -76,7 +74,6 @@ const App: React.FC = () => {
           setHubs(formattedHubs);
         }
 
-        // Fetch Bookings
         const { data: bookingsData, error: bookingsError } = await supabase
           .from('bookings')
           .select('*');
@@ -88,7 +85,7 @@ const App: React.FC = () => {
         }
       } catch (err: any) {
         console.error("Data fetch failed:", err);
-        setError("Satellite link unstable. Please check your connection or project configuration.");
+        setError("Satellite link unstable. Please check your Supabase connection.");
       } finally {
         setIsLoading(false);
       }
@@ -99,8 +96,7 @@ const App: React.FC = () => {
 
   // REAL-TIME CHAT
   useEffect(() => {
-    // @ts-ignore
-    if (supabase.supabaseUrl.includes('placeholder-please-set-your-url')) return;
+    if (isDemoMode()) return;
 
     const channel = supabase
       .channel('public:messages')
@@ -128,7 +124,7 @@ const App: React.FC = () => {
   const handleSendMessage = async (roomId: string, message: Partial<ChatMessage>) => {
     const tempId = 'temp-' + Date.now();
     
-    // Optimistic update for UI feel
+    // Always perform a local update for a snappy UI
     if (roomId !== 'ai-scout') {
         const optimisticMsg: ChatMessage = {
             id: tempId,
@@ -143,22 +139,19 @@ const App: React.FC = () => {
         ));
     }
 
-    // Persist to Supabase if keys exist
-    // @ts-ignore
-    if (!supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+    // Persist to Supabase if NOT in demo mode
+    if (!isDemoMode()) {
       const { error } = await supabase
         .from('messages')
-        .insert([
-          { 
-            room_id: roomId, 
-            sender_nickname: userNickname, 
-            text: message.text 
-          }
-        ]);
-      if (error) console.error("Message transmission failure:", error);
+        .insert([{ 
+          room_id: roomId, 
+          sender_nickname: userNickname, 
+          text: message.text 
+        }]);
+      if (error) console.error("Persistent storage failed:", error);
     }
 
-    // AI logic
+    // AI logic (runs regardless of Supabase state as long as Gemini API Key is valid)
     if (roomId === 'ai-scout' && message.text) {
       const aiResponseText = await getAIScoutResponse(message.text, hubs);
       const aiMsg: ChatMessage = {
@@ -173,8 +166,7 @@ const App: React.FC = () => {
         room.id === 'ai-scout' ? { ...room, messages: [...room.messages, aiMsg] } : room
       ));
 
-      // @ts-ignore
-      if (!supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+      if (!isDemoMode()) {
         await supabase.from('messages').insert([{
           room_id: 'ai-scout',
           sender_nickname: 'AI_SCOUT',
@@ -189,9 +181,7 @@ const App: React.FC = () => {
   const handleLogout = () => { setView('landing'); setUserNickname('Player One'); };
 
   const handleCreateBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status' | 'userId' | 'userName'>) => {
-    // @ts-ignore
-    if (supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
-        // Fallback for demo mode
+    if (isDemoMode()) {
         const demoBooking: Booking = {
             ...bookingData,
             id: 'demo-' + Date.now(),
@@ -205,23 +195,21 @@ const App: React.FC = () => {
         return;
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('bookings')
-      .insert([
-        {
-          hub_id: bookingData.hubId,
-          hub_name: bookingData.hubName,
-          slot_time: bookingData.slotTime,
-          payment_method: bookingData.paymentMethod,
-          user_name: userNickname,
-          status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed'
-        }
-      ]);
+      .insert([{
+        hub_id: bookingData.hubId,
+        hub_name: bookingData.hubName,
+        slot_time: bookingData.slotTime,
+        payment_method: bookingData.paymentMethod,
+        user_name: userNickname,
+        status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed'
+      }]);
       
     if (!error) {
       setView('user');
     } else {
-        alert("Satellite link error: Could not process booking.");
+        alert("Booking failure: Could not link to satellite database.");
     }
   };
 
@@ -243,9 +231,9 @@ const App: React.FC = () => {
               <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto">
                  <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
-              <h2 className="text-2xl font-black uppercase text-white">Signal Lost</h2>
+              <h2 className="text-2xl font-black uppercase text-white">Uplink Interrupted</h2>
               <p className="text-slate-400 font-medium">{error}</p>
-              <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-800 text-white font-black rounded-xl uppercase tracking-widest text-xs">Re-attempt Uplink</button>
+              <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-800 text-white font-black rounded-xl uppercase tracking-widest text-xs">Refresh Comms</button>
            </div>
         </div>
      );
