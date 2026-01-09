@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { UserRole } from '../types';
+import { supabase } from '../services/supabase';
 
 interface AuthViewProps {
   type: UserRole;
@@ -10,15 +10,46 @@ interface AuthViewProps {
 
 const AuthView: React.FC<AuthViewProps> = ({ type, onBack, onSuccess }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
-  const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Only pass nickname if it's a user role
-    onSuccess(type === 'user' ? (nickname || name || 'Player One') : undefined);
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (mode === 'signup') {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              nickname: type === 'user' ? nickname : 'Owner',
+              role: type
+            }
+          }
+        });
+        if (signUpError) throw signUpError;
+        onSuccess(nickname || 'Player');
+      } else {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) throw signInError;
+        // Retrieve nickname from metadata
+        const userNickname = data.user?.user_metadata?.nickname || 'Player';
+        onSuccess(userNickname);
+      }
+    } catch (err: any) {
+      setError(err.message || "Authentication failed. Check your uplink.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,23 +74,14 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onBack, onSuccess }) => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {mode === 'signup' && (
-            <div className="space-y-2">
-              <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest block">LEGAL NAME</label>
-              <input 
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-                className="w-full bg-[#020617] border border-slate-800 text-white rounded-2xl py-4 px-6 focus:border-cyan-500 outline-none transition-all placeholder:text-slate-700"
-                required
-              />
-            </div>
-          )}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-[10px] font-black uppercase text-center">
+            {error}
+          </div>
+        )}
 
-          {/* Nickname is EXCLUSIVELY for users */}
-          {type === 'user' && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {type === 'user' && mode === 'signup' && (
             <div className="space-y-2">
               <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest block">NICKNAME (SITE ALIAS)</label>
               <input 
@@ -99,13 +121,15 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onBack, onSuccess }) => {
 
           <button 
             type="submit"
+            disabled={loading}
             className={`w-full py-5 font-black rounded-2xl transition-all shadow-lg text-lg ${
+              loading ? 'opacity-50 cursor-not-allowed bg-slate-700' :
               mode === 'login' 
                 ? 'bg-[#06b6d4] hover:bg-[#0891b2] text-[#020617] shadow-[0_0_20px_rgba(6,182,212,0.3)]' 
                 : 'bg-[#10b981] hover:bg-[#059669] text-[#020617] shadow-[0_0_20px_rgba(16,185,129,0.3)]'
             }`}
           >
-            {mode === 'login' ? 'Authenticate' : 'Create Identity'}
+            {loading ? 'SYNCING...' : mode === 'login' ? 'Authenticate' : 'Create Identity'}
           </button>
         </form>
 
