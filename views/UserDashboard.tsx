@@ -12,10 +12,10 @@ interface UserDashboardProps {
   onLogout: () => void;
   onHubSelect: (hub: Hub) => void;
   onNavigateHome: () => void;
-  onSendMessage: (roomId: string, message: Partial<ChatMessage>) => void;
-  onVotePoll: (roomId: string, messageId: string, optionIndex: number) => void;
-  onCreateSquad: (name: string) => string;
-  onJoinSquad: (code: string) => boolean;
+  onSendMessage: (roomId: string, message: Partial<ChatMessage>) => void | Promise<void>;
+  onVotePoll: (roomId: string, messageId: string, optionIndex: number) => void | Promise<void>;
+  onCreateSquad: (name: string) => Promise<string>;
+  onJoinSquad: (code: string) => Promise<string | null>;
 }
 
 type SortOption = 'recommended' | 'distance' | 'price' | 'rating';
@@ -63,24 +63,23 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     setChatInput('');
   };
 
-  const handleCreateSquadSubmit = (e: React.FormEvent) => {
+  const handleCreateSquadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!squadNameInput.trim()) return;
-    const newId = onCreateSquad(squadNameInput);
+    const newId = await onCreateSquad(squadNameInput);
     setActiveRoomId(newId);
     setSquadNameInput('');
     setShowSquadModal(false);
   };
 
-  const handleJoinSquadSubmit = () => {
+  const handleJoinSquadSubmit = async () => {
     if (joinCodeInput.length !== 4) {
       setJoinError("Code must be 4 digits.");
       return;
     }
-    const success = onJoinSquad(joinCodeInput);
-    if (success) {
-      const room = chatRooms.find(r => r.joinCode === joinCodeInput);
-      if (room) setActiveRoomId(room.id);
+    const roomId = await onJoinSquad(joinCodeInput);
+    if (roomId) {
+      setActiveRoomId(roomId);
       setShowSquadModal(false);
       setJoinCodeInput('');
       setJoinError(null);

@@ -146,7 +146,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCreateSquad = async (name: string) => {
+  const handleCreateSquad = async (name: string): Promise<string> => {
     const id = 'sq-' + Date.now();
     const joinCode = Math.floor(1000 + Math.random() * 9000).toString();
     
@@ -180,10 +180,10 @@ const App: React.FC = () => {
     return id;
   };
 
-  const handleJoinSquad = async (code: string) => {
+  const handleJoinSquad = async (code: string): Promise<string | null> => {
     if (isDemoMode()) {
        const room = chatRooms.find(r => r.joinCode === code);
-       return !!room;
+       return room ? room.id : null;
     }
 
     const { data, error } = await supabase.from('rooms').select('*').eq('join_code', code).single();
@@ -202,9 +202,9 @@ const App: React.FC = () => {
           };
           setChatRooms(prev => [...prev, newRoom]);
        }
-       return true;
+       return data.id;
     }
-    return false;
+    return null;
   };
 
   const handleHubSelect = (hub: Hub) => { if (!hub.isSoldOut) { setSelectedHub(hub); setView('hub-detail'); } };
