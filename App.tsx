@@ -1,13 +1,13 @@
-
-import React, { useState } from 'react';
-import { UserRole, Hub, Booking, Review, ChatRoom, ChatMessage, Poll } from './types';
+import React, { useState, useEffect } from 'react';
+import { UserRole, Hub, Booking, ChatRoom, ChatMessage } from './types';
 import LandingView from './views/LandingView';
 import AuthView from './views/AuthView';
 import UserDashboard from './views/UserDashboard';
 import HubDetailView from './views/HubDetailView';
 import OwnerDashboard from './views/OwnerDashboard';
 import HubRegisterView from './views/HubRegisterView';
-import { MOCK_HUBS } from './constants';
+import { getAIScoutResponse } from './services/aiService';
+import { supabase } from './services/supabase';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'auth' | 'user' | 'owner' | 'hub-detail' | 'hub-register'>('landing');
@@ -16,302 +16,253 @@ const App: React.FC = () => {
   const [editingHub, setEditingHub] = useState<Hub | null>(null);
   const [userNickname, setUserNickname] = useState<string>('Player One');
   
-  // Initialize with dummy data for user browsing
-  const [hubs, setHubs] = useState<Hub[]>(MOCK_HUBS);
+  const [hubs, setHubs] = useState<Hub[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Chat Rooms State
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([
     {
       id: 'global',
       name: 'Global Arena Chat',
       description: 'The main hub for finding players and general discussion.',
       isGlobal: true,
-      messages: [
-        { id: 'm1', senderNickname: 'GarfSystem', text: 'Welcome to the Global Arena! Be respectful and play hard.', timestamp: Date.now() - 3600000, type: 'text', isSystem: true },
-        { id: 'm2', senderNickname: 'ProGamer', text: 'Looking for 2 more players for Arena One Turf tonight at 8 PM. Who is in?', timestamp: Date.now() - 1800000, type: 'text' },
-      ]
+      messages: []
     },
     {
-      id: 'squad-1',
-      name: 'Mumbai Strikers',
-      description: 'Private squad for weekend turf games.',
-      isGlobal: false,
-      messages: []
+      id: 'ai-scout',
+      name: 'Tactical AI Scout',
+      description: 'Direct comms with Garf intelligence for hub recommendations.',
+      isGlobal: true,
+      messages: [
+        { id: 'ai1', senderNickname: 'AI_SCOUT', text: 'Unit active. I can help you find the perfect turf or gaming station. What are your parameters?', timestamp: Date.now(), type: 'text' }
+      ]
     }
   ]);
 
-  // We track user-created IDs to differentiate from MOCK_HUBS in the owner panel
   const [ownerHubIds, setOwnerHubIds] = useState<Set<string>>(new Set());
 
-  const handleStartAuth = (role: UserRole) => {
-    setAuthType(role);
-    setView('auth');
-  };
+  // REAL DATA FETCHING
+  useEffect(() => {
+    const fetchData = async () => {
+      // If using placeholder keys, we skip fetching to avoid repeated console errors
+      // @ts-ignore - access to protected property for check
+      if (supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+        setIsLoading(false);
+        console.warn("Supabase keys not detected. Running in offline/demo mode.");
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch Hubs from Supabase
+        const { data: hubsData, error: hubsError } = await supabase
+          .from('hubs')
+          .select('*');
+
+        if (hubsError) throw hubsError;
+
+        if (hubsData) {
+          const formattedHubs: Hub[] = hubsData.map(h => ({
+            ...h,
+            priceStart: h.price_start,
+            isSoldOut: h.is_sold_out,
+            contactPhone: h.contact_phone,
+            contactEmail: h.contact_email,
+            slots: h.slots || [],
+          }));
+          setHubs(formattedHubs);
+        }
+
+        // Fetch Bookings
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('*');
+        
+        if (bookingsError) throw bookingsError;
+
+        if (bookingsData) {
+          setBookings(bookingsData as any);
+        }
+      } catch (err: any) {
+        console.error("Data fetch failed:", err);
+        setError("Satellite link unstable. Please check your connection or project configuration.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [view]);
+
+  // REAL-TIME CHAT
+  useEffect(() => {
+    // @ts-ignore
+    if (supabase.supabaseUrl.includes('placeholder-please-set-your-url')) return;
+
+    const channel = supabase
+      .channel('public:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        const newMessage = payload.new as any;
+        setChatRooms(prev => prev.map(room => 
+          room.id === newMessage.room_id 
+            ? { ...room, messages: [...room.messages, { ...newMessage, id: 'db-' + newMessage.id, timestamp: new Date(newMessage.timestamp).getTime(), type: 'text' }] }
+            : room
+        ));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleAuthSuccess = (nickname?: string) => {
-    if (nickname) {
-      setUserNickname(nickname);
-    } else if (authType === 'owner') {
-      setUserNickname('System Owner'); 
-    }
+    if (nickname) setUserNickname(nickname);
+    else if (authType === 'owner') setUserNickname('System Owner'); 
     setView(authType === 'owner' ? 'owner' : 'user');
   };
 
-  const handleHubSelect = (hub: Hub) => {
-    if (hub.isSoldOut) return;
-    setSelectedHub(hub);
-    setView('hub-detail');
-  };
-
-  const handleBack = () => {
-    if (view === 'hub-detail' || view === 'hub-register') {
-      setView(authType === 'owner' ? 'owner' : 'user');
-      setEditingHub(null);
-    } else if (view === 'auth') {
-      setView('landing');
-    } else {
-      setView('landing');
+  const handleSendMessage = async (roomId: string, message: Partial<ChatMessage>) => {
+    const tempId = 'temp-' + Date.now();
+    
+    // Optimistic update for UI feel
+    if (roomId !== 'ai-scout') {
+        const optimisticMsg: ChatMessage = {
+            id: tempId,
+            senderNickname: userNickname,
+            text: message.text,
+            timestamp: Date.now(),
+            type: 'text'
+        } as ChatMessage;
+        
+        setChatRooms(prev => prev.map(room => 
+            room.id === roomId ? { ...room, messages: [...room.messages, optimisticMsg] } : room
+        ));
     }
-  };
 
-  const handleLogout = () => {
-    setView('landing');
-    setEditingHub(null);
-    setUserNickname('Player One');
-  };
+    // Persist to Supabase if keys exist
+    // @ts-ignore
+    if (!supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+      const { error } = await supabase
+        .from('messages')
+        .insert([
+          { 
+            room_id: roomId, 
+            sender_nickname: userNickname, 
+            text: message.text 
+          }
+        ]);
+      if (error) console.error("Message transmission failure:", error);
+    }
 
-  const handleAddHub = () => {
-    setEditingHub(null);
-    setView('hub-register');
-  };
-
-  const handleEditHub = (hub: Hub) => {
-    setEditingHub(hub);
-    setView('hub-register');
-  };
-
-  const handleSaveHub = (newHub: Hub) => {
-    setHubs(prev => {
-      const exists = prev.find(h => h.id === newHub.id);
-      if (exists) {
-        return prev.map(h => h.id === newHub.id ? newHub : h);
-      }
-      return [newHub, ...prev];
-    });
-    setOwnerHubIds(prev => new Set(prev).add(newHub.id));
-    setView('owner');
-    setEditingHub(null);
-  };
-
-  const handlePostReview = (hubId: string, review: Omit<Review, 'id' | 'date'>) => {
-    const newReview: Review = {
-      ...review,
-      id: 'rev-' + Date.now(),
-      date: new Date().toISOString().split('T')[0]
-    };
-
-    setHubs(prev => prev.map(hub => {
-      if (hub.id === hubId) {
-        const updatedReviews = [newReview, ...(hub.reviews || [])];
-        const avgRating = updatedReviews.reduce((acc, curr) => acc + curr.rating, 0) / updatedReviews.length;
-        return { ...hub, reviews: updatedReviews, rating: parseFloat(avgRating.toFixed(1)) };
-      }
-      return hub;
-    }));
-  };
-
-  const handleToggleSoldOut = (hubId: string) => {
-    setHubs(prev => prev.map(h => h.id === hubId ? { ...h, isSoldOut: !h.isSoldOut } : h));
-  };
-
-  const handleCreateBooking = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status' | 'userId' | 'userName'>) => {
-    const newBooking: Booking = {
-      ...bookingData,
-      id: 'b-' + Date.now(),
-      createdAt: Date.now(),
-      status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed',
-      userId: 'u-current',
-      userName: userNickname,
-    };
-
-    setBookings(prev => [newBooking, ...prev]);
-
-    // Add a system message to global chat when a booking is made
-    const systemMsg: ChatMessage = {
-      id: 'm-' + Date.now(),
-      senderNickname: 'GarfSystem',
-      text: `${userNickname} just reserved a slot at ${bookingData.hubName}! ${bookingData.playerCount ? `Room for ${bookingData.playerCount} players.` : ''}`,
-      timestamp: Date.now(),
-      type: 'text',
-      isSystem: true
-    };
-    setChatRooms(prev => prev.map(room => 
-      room.id === 'global' ? { ...room, messages: [...room.messages, systemMsg] } : room
-    ));
-
-    setHubs(prevHubs => prevHubs.map(hub => {
-      if (hub.id === bookingData.hubId) {
-        if (hub.type === 'TURF') {
-          return {
-            ...hub,
-            slots: hub.slots.map(s => s.id === bookingData.slotId ? { ...s, available: false } : s)
-          };
-        } else {
-          return {
-            ...hub,
-            accessories: hub.accessories?.map(acc => {
-              if (acc.name === bookingData.accessoryName) {
-                return {
-                  ...acc,
-                  slots: acc.slots.map(s => s.id === bookingData.slotId ? { ...s, available: false } : s)
-                };
-              }
-              return acc;
-            })
-          };
-        }
-      }
-      return hub;
-    }));
-  };
-
-  const handleSendMessage = (roomId: string, message: Partial<ChatMessage>) => {
-    const newMsg: ChatMessage = {
-      id: 'm-' + Date.now(),
-      senderNickname: userNickname,
-      timestamp: Date.now(),
-      type: 'text',
-      ...message
-    } as ChatMessage;
-
-    setChatRooms(prev => prev.map(room => 
-      room.id === roomId ? { ...room, messages: [...room.messages, newMsg] } : room
-    ));
-  };
-
-  const handleVotePoll = (roomId: string, messageId: string, optionIndex: number) => {
-    setChatRooms(prev => prev.map(room => {
-      if (room.id !== roomId) return room;
-      return {
-        ...room,
-        messages: room.messages.map(msg => {
-          if (msg.id !== messageId || !msg.poll) return msg;
-          
-          const newOptions = msg.poll.options.map((opt, idx) => {
-            // Remove nickname from all options first to prevent double voting
-            const filteredVotes = opt.votes.filter(n => n !== userNickname);
-            if (idx === optionIndex) {
-              return { ...opt, votes: [...filteredVotes, userNickname] };
-            }
-            return { ...opt, votes: filteredVotes };
-          });
-          
-          return { ...msg, poll: { ...msg.poll, options: newOptions } };
-        })
-      };
-    }));
-  };
-
-  const handleUpdateBookingStatus = (id: string, status: 'confirmed' | 'expired') => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
-  };
-
-  const handleCreateSquad = (name: string): string => {
-    const squadId = 'squad-' + Math.random().toString(36).substr(2, 4).toUpperCase();
-    const newRoom: ChatRoom = {
-      id: squadId,
-      name,
-      description: `Tactical squad created by ${userNickname}`,
-      isGlobal: false,
-      messages: [
-        { 
-          id: 'sys-' + Date.now(), 
-          senderNickname: 'GarfSystem', 
-          text: `Squad ${name} initialized. Secure the link to invite your team.`, 
-          timestamp: Date.now(), 
-          type: 'text', 
-          isSystem: true 
-        }
-      ]
-    };
-    setChatRooms(prev => [...prev, newRoom]);
-    return squadId;
-  };
-
-  const handleJoinSquad = (code: string): boolean => {
-    // In a real app, we'd search a database. Here we check our existing list.
-    const exists = chatRooms.find(r => r.id === code.toUpperCase() || r.id.includes(code.toUpperCase()));
-    if (exists) {
-      const joinMsg: ChatMessage = {
-        id: 'join-' + Date.now(),
-        senderNickname: 'GarfSystem',
-        text: `${userNickname} joined the squad via tactical link.`,
+    // AI logic
+    if (roomId === 'ai-scout' && message.text) {
+      const aiResponseText = await getAIScoutResponse(message.text, hubs);
+      const aiMsg: ChatMessage = {
+        id: 'ai-' + Date.now(),
+        senderNickname: 'AI_SCOUT',
+        text: aiResponseText,
         timestamp: Date.now(),
-        type: 'text',
-        isSystem: true
+        type: 'text'
       };
+      
       setChatRooms(prev => prev.map(room => 
-        room.id === exists.id ? { ...room, messages: [...room.messages, joinMsg] } : room
+        room.id === 'ai-scout' ? { ...room, messages: [...room.messages, aiMsg] } : room
       ));
-      return true;
+
+      // @ts-ignore
+      if (!supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+        await supabase.from('messages').insert([{
+          room_id: 'ai-scout',
+          sender_nickname: 'AI_SCOUT',
+          text: aiResponseText
+        }]);
+      }
     }
-    return false;
   };
 
-  const ownerHubs = hubs.filter(h => ownerHubIds.has(h.id));
-  const ownerArrivals = bookings.filter(b => ownerHubIds.has(b.hubId));
+  const handleHubSelect = (hub: Hub) => { if (!hub.isSoldOut) { setSelectedHub(hub); setView('hub-detail'); } };
+  const handleBack = () => setView(authType === 'owner' ? 'owner' : 'user');
+  const handleLogout = () => { setView('landing'); setUserNickname('Player One'); };
+
+  const handleCreateBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status' | 'userId' | 'userName'>) => {
+    // @ts-ignore
+    if (supabase.supabaseUrl.includes('placeholder-please-set-your-url')) {
+        // Fallback for demo mode
+        const demoBooking: Booking = {
+            ...bookingData,
+            id: 'demo-' + Date.now(),
+            createdAt: Date.now(),
+            status: 'confirmed',
+            userId: 'demo-user',
+            userName: userNickname
+        };
+        setBookings(prev => [demoBooking, ...prev]);
+        setView('user');
+        return;
+    }
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert([
+        {
+          hub_id: bookingData.hubId,
+          hub_name: bookingData.hubName,
+          slot_time: bookingData.slotTime,
+          payment_method: bookingData.paymentMethod,
+          user_name: userNickname,
+          status: bookingData.paymentMethod === 'cash' ? 'pending' : 'confirmed'
+        }
+      ]);
+      
+    if (!error) {
+      setView('user');
+    } else {
+        alert("Satellite link error: Could not process booking.");
+    }
+  };
+
+  if (isLoading && view !== 'landing') {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-emerald-500 font-black uppercase tracking-[0.3em] text-xs">Syncing with Garf Satellite...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && view !== 'landing') {
+     return (
+        <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 text-center">
+           <div className="max-w-md space-y-6">
+              <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto">
+                 <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
+              <h2 className="text-2xl font-black uppercase text-white">Signal Lost</h2>
+              <p className="text-slate-400 font-medium">{error}</p>
+              <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-800 text-white font-black rounded-xl uppercase tracking-widest text-xs">Re-attempt Uplink</button>
+           </div>
+        </div>
+     );
+  }
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100">
-      {view === 'landing' && <LandingView onStartAuth={handleStartAuth} onBrowseGuest={() => setView('user')} />}
-      {view === 'auth' && <AuthView type={authType} onBack={handleBack} onSuccess={handleAuthSuccess} />}
+      {view === 'landing' && <LandingView onStartAuth={(role) => { setAuthType(role); setView('auth'); }} onBrowseGuest={() => setView('user')} />}
+      {view === 'auth' && <AuthView type={authType} onBack={() => setView('landing')} onSuccess={handleAuthSuccess} />}
       {view === 'user' && (
-        <UserDashboard 
-          hubs={hubs}
-          nickname={userNickname}
-          bookings={bookings.filter(b => b.userId === 'u-current')}
-          chatRooms={chatRooms}
-          onLogout={handleLogout} 
-          onHubSelect={handleHubSelect} 
-          onNavigateHome={() => setView('user')}
-          onSendMessage={handleSendMessage}
-          onVotePoll={handleVotePoll}
-          onCreateSquad={handleCreateSquad}
-          onJoinSquad={handleJoinSquad}
-        />
+        <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={handleHubSelect} onNavigateHome={() => setView('user')} onSendMessage={handleSendMessage} onVotePoll={() => {}} onCreateSquad={(name) => { const id = 'sq-' + Date.now(); setChatRooms(prev => [...prev, { id, name, description: 'Squad', isGlobal: false, messages: [] }]); return id; }} onJoinSquad={() => true} />
       )}
       {view === 'hub-detail' && selectedHub && (
-        <HubDetailView 
-          hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} 
-          onBack={handleBack} 
-          role={authType} 
-          onLogout={handleLogout}
-          onBook={handleCreateBooking}
-          onPostReview={handlePostReview}
-        />
+        <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={handleBack} role={authType} onLogout={handleLogout} onBook={handleCreateBooking} onPostReview={() => {}} />
       )}
-      {view === 'owner' && (
-        <OwnerDashboard 
-          hubs={ownerHubs}
-          bookings={ownerArrivals}
-          onUpdateBookingStatus={handleUpdateBookingStatus}
-          onLogout={handleLogout} 
-          onAddHub={handleAddHub}
-          onEditHub={handleEditHub}
-          onToggleSoldOut={handleToggleSoldOut}
-          onNavigateHome={() => setView('owner')}
-        />
-      )}
-      {view === 'hub-register' && (
-        <HubRegisterView 
-          onBack={handleBack} 
-          onLogout={handleLogout} 
-          onNavigateHome={() => setView('owner')} 
-          hubToEdit={editingHub || undefined}
-          onSave={handleSaveHub}
-        />
-      )}
+      {view === 'owner' && <OwnerDashboard hubs={hubs.filter(h => ownerHubIds.has(h.id))} bookings={bookings.filter(b => ownerHubIds.has(b.hubId))} onUpdateBookingStatus={() => {}} onLogout={handleLogout} onAddHub={() => setView('hub-register')} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onToggleSoldOut={() => {}} onNavigateHome={() => setView('owner')} />}
+      {view === 'hub-register' && <HubRegisterView onBack={handleBack} onLogout={handleLogout} onNavigateHome={() => setView('owner')} hubToEdit={editingHub || undefined} onSave={() => setView('owner')} />}
     </div>
   );
 };
