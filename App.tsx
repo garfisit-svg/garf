@@ -6,7 +6,6 @@ import UserDashboard from './views/UserDashboard';
 import HubDetailView from './views/HubDetailView';
 import OwnerDashboard from './views/OwnerDashboard';
 import HubRegisterView from './views/HubRegisterView';
-import { getAIScoutResponse } from './services/aiService';
 import { supabase, isDemoMode } from './services/supabase';
 
 const App: React.FC = () => {
@@ -28,15 +27,6 @@ const App: React.FC = () => {
       description: 'The main hub for finding players and general discussion.',
       isGlobal: true,
       messages: []
-    },
-    {
-      id: 'ai-scout',
-      name: 'Tactical AI Scout',
-      description: 'Direct comms with Garf intelligence for hub recommendations.',
-      isGlobal: true,
-      messages: [
-        { id: 'ai1', senderNickname: 'AI_SCOUT', text: 'Unit active. I can help you find the perfect turf or gaming station. What are your parameters?', timestamp: Date.now(), type: 'text' }
-      ]
     }
   ]);
 
@@ -123,19 +113,19 @@ const App: React.FC = () => {
   const handleSendMessage = async (roomId: string, message: Partial<ChatMessage>) => {
     const tempId = 'temp-' + Date.now();
     
-    if (roomId !== 'ai-scout') {
-        const optimisticMsg: ChatMessage = {
-            id: tempId,
-            senderNickname: userNickname,
-            text: message.text,
-            timestamp: Date.now(),
-            type: 'text'
-        } as ChatMessage;
-        
-        setChatRooms(prev => prev.map(room => 
-            room.id === roomId ? { ...room, messages: [...room.messages, optimisticMsg] } : room
-        ));
-    }
+    // Optimistic local update
+    const optimisticMsg: ChatMessage = {
+        id: tempId,
+        senderNickname: userNickname,
+        text: message.text,
+        timestamp: Date.now(),
+        type: message.type || 'text',
+        poll: message.poll
+    } as ChatMessage;
+    
+    setChatRooms(prev => prev.map(room => 
+        room.id === roomId ? { ...room, messages: [...room.messages, optimisticMsg] } : room
+    ));
 
     if (!isDemoMode()) {
       const { error } = await supabase
@@ -143,32 +133,11 @@ const App: React.FC = () => {
         .insert([{ 
           room_id: roomId, 
           sender_nickname: userNickname, 
-          text: message.text 
+          text: message.text,
+          type: message.type || 'text',
+          poll: message.poll ? JSON.stringify(message.poll) : null
         }]);
       if (error) console.error("Persistent storage failed:", error);
-    }
-
-    if (roomId === 'ai-scout' && message.text) {
-      const aiResponseText = await getAIScoutResponse(message.text, hubs);
-      const aiMsg: ChatMessage = {
-        id: 'ai-' + Date.now(),
-        senderNickname: 'AI_SCOUT',
-        text: aiResponseText,
-        timestamp: Date.now(),
-        type: 'text'
-      };
-      
-      setChatRooms(prev => prev.map(room => 
-        room.id === 'ai-scout' ? { ...room, messages: [...room.messages, aiMsg] } : room
-      ));
-
-      if (!isDemoMode()) {
-        await supabase.from('messages').insert([{
-          room_id: 'ai-scout',
-          sender_nickname: 'AI_SCOUT',
-          text: aiResponseText
-        }]);
-      }
     }
   };
 
@@ -209,38 +178,54 @@ const App: React.FC = () => {
     }
   };
 
-  if (isLoading && view !== 'landing') {
-    return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-emerald-500 font-black uppercase tracking-[0.3em] text-xs">Syncing with Garf Satellite...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleCreateSquad = (name: string) => {
+    const id = 'sq-' + Date.now();
+    const joinCode = Math.floor(1000 + Math.random() * 9000).toString(); // Generate 4-digit code
+    const newRoom: ChatRoom = {
+      id,
+      name,
+      description: `Tactical Squad - Code: ${joinCode}`,
+      isGlobal: false,
+      messages: [{
+        id: 'sys-' + Date.now(),
+        senderNickname: 'SYSTEM',
+        text: `Squad established. Tactical link code: ${joinCode}`,
+        timestamp: Date.now(),
+        type: 'text',
+        isSystem: true
+      }],
+      joinCode
+    };
+    setChatRooms(prev => [...prev, newRoom]);
+    return id;
+  };
 
-  if (error && view !== 'landing') {
-     return (
-        <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 text-center">
-           <div className="max-w-md space-y-6">
-              <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto">
-                 <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              </div>
-              <h2 className="text-2xl font-black uppercase text-white">Uplink Interrupted</h2>
-              <p className="text-slate-400 font-medium">{error}</p>
-              <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-800 text-white font-black rounded-xl uppercase tracking-widest text-xs">Refresh Comms</button>
-           </div>
-        </div>
-     );
-  }
+  const handleJoinSquad = (code: string) => {
+    const room = chatRooms.find(r => r.joinCode === code);
+    if (room) {
+      return true; // The UI should then switch to this roomId
+    }
+    return false;
+  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100">
       {view === 'landing' && <LandingView onStartAuth={(role) => { setAuthType(role); setView('auth'); }} onBrowseGuest={() => setView('user')} />}
       {view === 'auth' && <AuthView type={authType} onBack={() => setView('landing')} onSuccess={handleAuthSuccess} />}
       {view === 'user' && (
-        <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={handleHubSelect} onNavigateHome={() => setView('user')} onSendMessage={handleSendMessage} onVotePoll={() => {}} onCreateSquad={(name) => { const id = 'sq-' + Date.now(); setChatRooms(prev => [...prev, { id, name, description: 'Squad', isGlobal: false, messages: [] }]); return id; }} onJoinSquad={() => true} />
+        <UserDashboard 
+          hubs={hubs} 
+          nickname={userNickname} 
+          bookings={bookings} 
+          chatRooms={chatRooms} 
+          onLogout={handleLogout} 
+          onHubSelect={handleHubSelect} 
+          onNavigateHome={() => setView('user')} 
+          onSendMessage={handleSendMessage} 
+          onVotePoll={() => {}} 
+          onCreateSquad={handleCreateSquad} 
+          onJoinSquad={handleJoinSquad} 
+        />
       )}
       {view === 'hub-detail' && selectedHub && (
         <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={handleBack} role={authType} onLogout={handleLogout} onBook={handleCreateBooking} onPostReview={() => {}} />

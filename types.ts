@@ -1,4 +1,3 @@
-
 export type UserRole = 'user' | 'owner' | 'guest';
 
 export interface TimeSlot {
@@ -89,4 +88,5 @@ export interface ChatRoom {
   description: string;
   isGlobal: boolean;
   messages: ChatMessage[];
+  joinCode?: string; // 4-digit code for squads
 }
