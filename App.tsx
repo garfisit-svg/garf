@@ -45,7 +45,6 @@ const App: React.FC = () => {
   // REAL DATA FETCHING
   useEffect(() => {
     const fetchData = async () => {
-      // If in demo mode, skip fetching and use empty states (or you could load mock data here)
       if (isDemoMode()) {
         setIsLoading(false);
         console.warn("Supabase keys not detected. App running in restricted Demo Mode.");
@@ -63,7 +62,7 @@ const App: React.FC = () => {
         if (hubsError) throw hubsError;
 
         if (hubsData) {
-          const formattedHubs: Hub[] = hubsData.map(h => ({
+          const formattedHubs: Hub[] = hubsData.map((h: any) => ({
             ...h,
             priceStart: h.price_start,
             isSoldOut: h.is_sold_out,
@@ -100,7 +99,7 @@ const App: React.FC = () => {
 
     const channel = supabase
       .channel('public:messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
         const newMessage = payload.new as any;
         setChatRooms(prev => prev.map(room => 
           room.id === newMessage.room_id 
@@ -124,7 +123,6 @@ const App: React.FC = () => {
   const handleSendMessage = async (roomId: string, message: Partial<ChatMessage>) => {
     const tempId = 'temp-' + Date.now();
     
-    // Always perform a local update for a snappy UI
     if (roomId !== 'ai-scout') {
         const optimisticMsg: ChatMessage = {
             id: tempId,
@@ -139,7 +137,6 @@ const App: React.FC = () => {
         ));
     }
 
-    // Persist to Supabase if NOT in demo mode
     if (!isDemoMode()) {
       const { error } = await supabase
         .from('messages')
@@ -151,7 +148,6 @@ const App: React.FC = () => {
       if (error) console.error("Persistent storage failed:", error);
     }
 
-    // AI logic (runs regardless of Supabase state as long as Gemini API Key is valid)
     if (roomId === 'ai-scout' && message.text) {
       const aiResponseText = await getAIScoutResponse(message.text, hubs);
       const aiMsg: ChatMessage = {

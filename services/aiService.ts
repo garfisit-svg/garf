@@ -2,7 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { Hub } from "../types";
 
 // Note: process.env.API_KEY is automatically injected
-const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = (typeof process !== 'undefined' && process.env) ? (process.env as any).API_KEY : undefined;
+const genAI = new GoogleGenAI({ apiKey: apiKey || "" });
 
 export const getAIScoutResponse = async (userQuery: string, availableHubs: Hub[]) => {
   const model = "gemini-3-flash-preview";
