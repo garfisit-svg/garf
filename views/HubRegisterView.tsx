@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { Hub, Accessory, TimeSlot } from '../types';
@@ -273,7 +272,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
                     rows={4} 
                     value={description} 
                     onChange={(e) => setDescription(e.target.value)} 
-                    placeholder="Describe the elite experience at your venue..." 
+                    placeholder="Describe the premium experience at your venue..." 
                     className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg resize-none" 
                   />
                 </div>
