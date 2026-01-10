@@ -247,11 +247,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                    </div>
 
                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full md:w-auto p-1 items-center">
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Tactical Sort</span>
+                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Sort by</span>
                       {[
-                        { id: 'RATING', label: 'Top Intel' },
-                        { id: 'PRICE_LOW', label: 'Credits: Low' },
-                        { id: 'PRICE_HIGH', label: 'Credits: High' }
+                        { id: 'RATING', label: 'Top Rated' },
+                        { id: 'PRICE_LOW', label: 'Low Price' },
+                        { id: 'PRICE_HIGH', label: 'High Price' }
                       ].map((sort) => (
                         <button 
                           key={sort.id}
@@ -389,7 +389,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         )}
       </main>
 
-      {/* MODALS (Squad, Poll Creator) remains the same */}
+      {/* MODALS */}
       {showSquadModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#020617]/90 backdrop-blur-2xl">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
@@ -399,12 +399,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
             <div className="flex gap-2 p-1 bg-[#020617] rounded-2xl border border-slate-800 mb-8">
               <button onClick={() => setSquadModalTab('create')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'create' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Create Frequency</button>
               <button onClick={() => setSquadModalTab('join')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'join' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Join Frequency</button>
             </div>
-
             {squadModalTab === 'create' ? (
               <form onSubmit={handleCreateSquadSubmit} className="space-y-6">
                 <div className="space-y-2">
@@ -437,13 +435,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
             <form onSubmit={handleCreatePollSubmit} className="space-y-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase">Question</label>
                 <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Pick our drop zone?" className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-purple-500 text-white font-bold" />
               </div>
-
               <div className="space-y-4">
                  <div className="flex justify-between items-center">
                    <label className="text-[10px] font-black text-slate-500 uppercase">Tactical Options</label>
@@ -455,7 +451,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     ))}
                  </div>
               </div>
-
               <button type="submit" className="w-full py-5 bg-purple-600 text-white font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all shadow-[0_8px_32px_rgba(147,51,234,0.3)]">Deploy Poll</button>
             </form>
           </div>
