@@ -82,7 +82,6 @@ const App: React.FC = () => {
       
       try {
         let hubsQuery = supabase.from('hubs').select('*');
-        // Handle owner filter only if session user exists and RLS is ready
         if (authType === 'owner' && sessionUser) {
           hubsQuery = hubsQuery.eq('owner_id', sessionUser.id);
         }
@@ -108,7 +107,6 @@ const App: React.FC = () => {
         } else if (authType === 'user') {
           bookingsQuery = bookingsQuery.eq('user_name', userNickname);
         } else if (authType === 'owner') {
-           // If owner has no hubs, don't query bookings
            setBookings([]);
            bookingsQuery = null as any;
         }
@@ -125,7 +123,6 @@ const App: React.FC = () => {
           })));
         }
 
-        // Fetch Chat Rooms
         const { data: roomsData } = await supabase.from('rooms').select('*');
         if (roomsData) {
           const formattedRooms: ChatRoom[] = await Promise.all(roomsData.map(async (r: any) => {
@@ -152,8 +149,8 @@ const App: React.FC = () => {
         }
 
       } catch (err: any) {
-        console.error("Supabase Connectivity Error:", err);
-        const errMsg = err.message || JSON.stringify(err);
+        console.error("Link Failure Diagnostics:", err);
+        const errMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
         setError(errMsg);
       } finally {
         setIsLoading(false);
@@ -170,31 +167,75 @@ const App: React.FC = () => {
         hub_name: d.hubName, 
         slot_time: d.slotTime, 
         user_name: userNickname, 
-        status: 'pending', 
+        status: d.paymentMethod === 'cash' ? 'pending' : 'confirmed', 
         payment_method: d.paymentMethod,
         transaction_id: `TXN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
       }]);
       
       if (bookError) throw bookError;
-      
       setRefreshTrigger(p => p + 1);
       setView('user');
     } catch (err: any) {
-      alert("Booking failed: " + err.message);
+      alert("Satellite Link Failure: " + err.message);
     }
   };
 
-  const handleAuthSuccess = (nickname?: string) => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setSessionUser(user);
-      const role = user?.user_metadata?.role as UserRole;
-      if (nickname) setUserNickname(nickname);
-      setAuthType(role);
-      setView(role === 'owner' ? 'owner' : 'user');
-    });
+  const handleSendMessage = async (roomId: string, message: Partial<ChatMessage>) => {
+    if (!sessionUser) return;
+    const { error: sendError } = await supabase.from('messages').insert([{ 
+      room_id: roomId === 'global' ? '00000000-0000-0000-0000-000000000000' : roomId, 
+      sender_nickname: userNickname, 
+      text: message.text,
+      type: message.type || 'text',
+      poll: message.poll || null
+    }]);
+    if (!sendError) setRefreshTrigger(prev => prev + 1);
   };
 
-  // Fix: Added the missing handleLogout function to properly handle user sign out and state clearing.
+  const handleVotePoll = async (roomId: string, messageId: string, optionIndex: number) => {
+    const room = chatRooms.find(r => r.id === roomId);
+    const message = room?.messages.find(m => m.id === messageId);
+    if (!message || !message.poll) return;
+
+    const newPoll: Poll = JSON.parse(JSON.stringify(message.poll));
+    newPoll.options.forEach((opt, idx) => {
+      opt.votes = opt.votes.filter(v => v !== userNickname);
+      if (idx === optionIndex) opt.votes.push(userNickname);
+    });
+
+    const { error: voteError } = await supabase.from('messages')
+      .update({ poll: newPoll })
+      .eq('id', parseInt(messageId));
+      
+    if (!voteError) setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleCreateSquad = async (name: string): Promise<string> => {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const { data, error: createError } = await supabase.from('rooms').insert([{
+      name,
+      description: `Private frequency by ${userNickname}`,
+      is_global: false,
+      join_code: code
+    }]).select();
+
+    if (createError) throw createError;
+    setRefreshTrigger(prev => prev + 1);
+    return data[0].id;
+  };
+
+  const handleJoinSquad = async (code: string): Promise<string | null> => {
+    const { data, error: joinError } = await supabase.from('rooms').select('id').eq('join_code', code);
+    if (joinError || !data.length) return null;
+    setRefreshTrigger(prev => prev + 1);
+    return data[0].id;
+  };
+
+  // Fix: Added handleAuthSuccess to resolve the error in AuthView onSuccess prop
+  const handleAuthSuccess = (nickname?: string) => {
+    if (nickname) setUserNickname(nickname);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setView('landing');
@@ -202,8 +243,6 @@ const App: React.FC = () => {
     setSessionUser(null);
     setHubs([]);
     setBookings([]);
-    setSelectedHub(null);
-    setEditingHub(null);
   };
 
   if (error) {
@@ -212,14 +251,14 @@ const App: React.FC = () => {
         <div className="w-24 h-24 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-8 animate-pulse">
           <svg className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         </div>
-        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">Database Schema Error</h1>
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">Satellite Link Lost</h1>
         <p className="text-slate-500 max-w-xl mb-8 font-medium leading-relaxed">
-          The application tried to access your data but failed: <span className="text-red-400 font-bold">{error}</span>. 
+          The database reported a discrepancy: <span className="text-red-400 font-bold">{error}</span>. 
           <br/><br/>
-          <span className="text-emerald-400 font-black uppercase text-xs">Solution:</span><br/>
-          Copy the SQL script provided in the chat and run it in your <span className="text-white">Supabase SQL Editor</span> to create the missing columns.
+          <span className="text-emerald-400 font-black uppercase text-xs">Correction:</span><br/>
+          Ensure the <span className="text-white">SQL Schema</span> provided has been deployed in your Supabase Editor.
         </p>
-        <button onClick={() => setRefreshTrigger(p => p + 1)} className="px-8 py-4 bg-white text-black font-black rounded-2xl uppercase tracking-widest hover:scale-105 transition-all">Retry Link</button>
+        <button onClick={() => setRefreshTrigger(p => p + 1)} className="px-8 py-4 bg-white text-black font-black rounded-2xl uppercase tracking-widest hover:scale-105 transition-all">Retry Synchronization</button>
       </div>
     );
   }
@@ -229,7 +268,7 @@ const App: React.FC = () => {
       {view === 'landing' && <LandingView onStartAuth={(role) => { setAuthType(role); setView('auth'); }} onBrowseGuest={() => { setAuthType('guest'); setView('user'); }} />}
       {view === 'auth' && <AuthView type={authType} onBack={() => setView('landing')} onSuccess={handleAuthSuccess} />}
       {view === 'user' && (
-        <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={(h) => { setSelectedHub(h); setView('hub-detail'); }} onNavigateHome={() => setView('user')} onSendMessage={() => {}} onVotePoll={() => {}} onCreateSquad={() => Promise.resolve('')} onJoinSquad={() => Promise.resolve('')} />
+        <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={(h) => { setSelectedHub(h); setView('hub-detail'); }} onNavigateHome={() => setView('user')} onSendMessage={handleSendMessage} onVotePoll={handleVotePoll} onCreateSquad={handleCreateSquad} onJoinSquad={handleJoinSquad} />
       )}
       {view === 'hub-detail' && selectedHub && (
         <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={handleBook} onPostReview={() => {}} />

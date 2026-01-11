@@ -163,26 +163,32 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         {activeTab === 'explore' && (
           <div className="space-y-8 animate-in fade-in duration-700">
              <section className="px-4 md:px-6">
-              <div className="relative w-full rounded-[40px] md:rounded-[60px] overflow-hidden min-h-[380px] flex flex-col items-center justify-center text-center p-8 border border-slate-800/30 shadow-[0_0_100px_rgba(16,185,129,0.05)]">
+              <div className="relative w-full rounded-[40px] md:rounded-[60px] overflow-hidden min-h-[480px] flex flex-col items-center justify-center text-center p-8 border border-slate-800/30 shadow-[0_0_100px_rgba(16,185,129,0.05)]">
                 <div className="absolute inset-0 z-0">
-                  <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover brightness-[0.05]" alt="" />
+                  <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover brightness-[0.08]" alt="" />
                 </div>
-                <div className="relative z-10 space-y-6 max-w-4xl w-full">
-                  <h1 className="text-4xl md:text-7xl font-black text-white leading-none uppercase tracking-tighter animate-in slide-in-from-bottom-6 duration-700">
-                    THE ARENA<br/><span className="bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent italic">IS YOURS</span>
+                <div className="relative z-10 space-y-4 max-w-3xl w-full">
+                  <p className="text-[#10b981] text-[10px] md:text-xs font-black uppercase tracking-[0.6em] mb-4">SEARCHING NEARBY</p>
+                  
+                  <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.1] uppercase tracking-tight animate-in slide-in-from-bottom-6 duration-700">
+                    DOMINATE THE<br/>
+                    <span className="bg-gradient-to-r from-[#34d399] via-[#10b981] to-[#3b82f6] bg-clip-text text-transparent">DIGITAL & DIRT</span>
                   </h1>
-                  <div className="space-y-1">
-                    <p className="text-emerald-400 text-[10px] md:text-xs font-black uppercase tracking-[0.4em]">Decentralised Venue Discovery • Real-Time Coordination</p>
-                    <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">Unleash the athlete and gamer within through the Garf secure network.</p>
-                  </div>
-                  <div className="relative w-full max-w-2xl mx-auto mt-4">
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2"><SearchIcon className="w-5 h-5 text-emerald-400" /></div>
+
+                  <p className="text-slate-300/80 text-sm md:text-lg font-medium max-w-2xl mx-auto mb-8">
+                    Real-time bookings for elite sports turfs and next-gen gaming cafes.
+                  </p>
+
+                  <div className="relative w-full max-w-xl mx-auto mt-8">
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2">
+                      <SearchIcon className="w-5 h-5 text-[#10b981]" />
+                    </div>
                     <input 
                       type="text" 
-                      placeholder="Scanning for turfs and gaming cafes..." 
+                      placeholder="Search city, area or hub name..." 
                       value={search} 
                       onChange={(e) => setSearch(e.target.value)} 
-                      className="w-full bg-[#0b1120]/60 backdrop-blur-3xl border border-slate-700/50 rounded-[28px] py-5 pl-16 pr-6 text-white focus:border-emerald-500 outline-none text-sm font-bold shadow-2xl transition-all" 
+                      className="w-full bg-[#0b1120]/40 backdrop-blur-md border border-slate-700/30 rounded-full py-5 pl-16 pr-6 text-white focus:border-emerald-500/50 outline-none text-sm font-medium shadow-2xl transition-all" 
                     />
                   </div>
                 </div>
