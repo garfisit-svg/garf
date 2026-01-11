@@ -237,8 +237,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full md:w-auto p-1">
                       {[
                         { id: 'ALL', label: 'All Arenas' },
-                        { id: 'TURF', label: 'Only Turfs' },
-                        { id: 'GAMING CAFE', label: 'Only Cafes' }
+                        { id: 'TURF', label: 'Turfs' },
+                        { id: 'GAMING CAFE', label: 'Cafes' }
                       ].map((type) => (
                         <button 
                           key={type.id}
@@ -250,11 +250,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                       ))}
                    </div>
                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full md:w-auto p-1 items-center">
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Tactical Sort</span>
+                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Sort</span>
                       {[
-                        { id: 'RATING', label: 'Top Intel' },
-                        { id: 'PRICE_LOW', label: 'Credits: Low' },
-                        { id: 'PRICE_HIGH', label: 'Credits: High' }
+                        { id: 'RATING', label: 'Top Rated' },
+                        { id: 'PRICE_LOW', label: 'Price: Low' },
+                        { id: 'PRICE_HIGH', label: 'Price: High' }
                       ].map((sort) => (
                         <button 
                           key={sort.id}
@@ -327,7 +327,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     <p className="text-[9px] text-slate-500 font-bold uppercase">{activeRoom?.description}</p>
                   </div>
                 </div>
-                <button onClick={() => setShowPollCreator(true)} className="bg-purple-600/10 text-purple-400 border border-purple-500/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">Tactical Poll</button>
+                <button onClick={() => setShowPollCreator(true)} className="bg-purple-600/10 text-purple-400 border border-purple-500/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">Create Poll</button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
                 {activeRoom?.messages.map((m) => (
@@ -335,7 +335,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     {!m.isSystem && <p className="text-[8px] font-black text-slate-600 uppercase mb-1 px-2">{m.senderNickname}</p>}
                     {m.type === 'poll' && m.poll ? (
                       <div className="bg-slate-800 rounded-[28px] p-6 border border-slate-700 w-full max-w-sm space-y-4">
-                        <p className="text-xs font-black uppercase tracking-widest text-emerald-400">Tactical Poll</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-emerald-400">Poll</p>
                         <h4 className="text-white font-black uppercase">{m.poll.question}</h4>
                         <div className="space-y-2">
                            {m.poll.options.map((opt, idx) => (
@@ -361,7 +361,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 <div ref={chatEndRef} />
               </div>
               <form onSubmit={handleSendText} className="p-6 bg-[#020617]/60 border-t border-slate-800 flex gap-3 backdrop-blur-3xl">
-                <input type="text" placeholder="Enter comms..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 bg-[#0b1120] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-sm font-bold" />
+                <input type="text" placeholder="Enter message..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 bg-[#0b1120] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-sm font-bold" />
                 <button type="submit" className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-black">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 </button>
@@ -407,30 +407,30 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#020617]/90 backdrop-blur-2xl">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
             <div className="flex justify-between items-start mb-8">
-              <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Tactical Squad</h3>
+              <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Squads</h3>
               <button onClick={() => setShowSquadModal(false)} className="text-slate-500 hover:text-white"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             <div className="flex gap-2 p-1 bg-[#020617] rounded-2xl border border-slate-800 mb-8">
-              <button onClick={() => setSquadModalTab('create')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'create' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Create Frequency</button>
-              <button onClick={() => setSquadModalTab('join')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'join' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Join Frequency</button>
+              <button onClick={() => setSquadModalTab('create')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'create' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Create Squad</button>
+              <button onClick={() => setSquadModalTab('join')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'join' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Join Squad</button>
             </div>
             {squadModalTab === 'create' ? (
               <form onSubmit={handleCreateSquadSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase">Frequency Name</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase">Squad Name</label>
                   <input type="text" value={squadNameInput} onChange={(e) => setSquadNameInput(e.target.value)} placeholder="Elite Comms..." className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-white font-bold" />
                 </div>
                 {joinError && <p className="text-red-500 text-[10px] font-bold uppercase">{joinError}</p>}
-                <button type="submit" className="w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all">Initialize</button>
+                <button type="submit" className="w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all">Create</button>
               </form>
             ) : (
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase">4-Digit Frequency Code</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase">4-Digit Squad Code</label>
                   <input type="text" maxLength={4} value={joinCodeInput} onChange={(e) => setJoinCodeInput(e.target.value.replace(/\D/g,''))} placeholder="0000" className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-white font-black text-3xl text-center tracking-[0.5em]" />
                 </div>
                 {joinError && <p className="text-red-500 text-[10px] font-bold uppercase">{joinError}</p>}
-                <button onClick={handleJoinSquadSubmit} className="w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all">Synchronize</button>
+                <button onClick={handleJoinSquadSubmit} className="w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all">Join</button>
               </div>
             )}
           </div>
@@ -441,16 +441,16 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#020617]/90 backdrop-blur-2xl">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] p-10 w-full max-w-xl shadow-2xl animate-in fade-in zoom-in duration-300">
              <div className="flex justify-between items-start mb-8">
-              <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Tactical Poll</h3>
+              <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Create Poll</h3>
               <button onClick={() => setShowPollCreator(false)} className="text-slate-500 hover:text-white"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             <form onSubmit={handleCreatePollSubmit} className="space-y-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase">Question</label>
-                <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Pick our drop zone?" className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-purple-500 text-white font-bold" />
+                <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Pick our location?" className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-purple-500 text-white font-bold" />
               </div>
               <div className="space-y-4">
-                 <div className="flex justify-between items-center"><label className="text-[10px] font-black text-slate-500 uppercase">Tactical Options</label><button type="button" onClick={addPollOption} className="text-purple-400 text-[10px] font-black uppercase hover:text-purple-300 transition-all">+ Add Option</button></div>
+                 <div className="flex justify-between items-center"><label className="text-[10px] font-black text-slate-500 uppercase">Options</label><button type="button" onClick={addPollOption} className="text-purple-400 text-[10px] font-black uppercase hover:text-purple-300 transition-all">+ Add Option</button></div>
                  <div className="space-y-3 max-h-[200px] overflow-y-auto no-scrollbar">
                     {pollOptions.map((opt, idx) => (
                       <input key={idx} type="text" value={opt} onChange={(e) => updatePollOption(idx, e.target.value)} placeholder={`Option ${idx + 1}`} className="w-full bg-[#020617] border border-slate-800 rounded-xl py-3 px-5 outline-none focus:border-purple-500 text-sm font-bold text-white" />

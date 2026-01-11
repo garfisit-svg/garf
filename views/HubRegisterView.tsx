@@ -4,8 +4,7 @@ import { Hub, Accessory, TimeSlot } from '../types';
 
 interface SlotData {
   id: string;
-  start: string;
-  end: string;
+  time: string;
   price: string;
 }
 
@@ -27,20 +26,23 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
   const [hubType, setHubType] = useState<'TURF' | 'GAMING CAFE'>('TURF');
   const [venueName, setVenueName] = useState('');
   const [address, setAddress] = useState('');
-  const [imagesInput, setImagesInput] = useState('');
+  const [upiId, setUpiId] = useState('');
+  const [images, setImages] = useState<string[]>(['']);
   const [description, setDescription] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   
+  // Slots for TURF
   const [turfSlots, setTurfSlots] = useState<SlotData[]>([
-    { id: 'ts1', start: '16:00', end: '17:00', price: '1200' }
+    { id: 'ts1', time: '16:00 - 17:00', price: '1200' }
   ]);
 
+  // Accessories for GAMING CAFE
   const [accessories, setAccessories] = useState<AccessoryData[]>([
     { 
-      id: 'acc' + Date.now(), 
-      name: 'Standard PC', 
-      slots: [{ id: 's' + Date.now(), start: '18:00', end: '19:00', price: '100' }] 
+      id: 'acc1', 
+      name: 'Accessory 1', 
+      slots: [{ id: 's1', time: '18:00 - 19:00', price: '100' }] 
     }
   ]);
 
@@ -49,7 +51,8 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       setHubType(hubToEdit.type);
       setVenueName(hubToEdit.name);
       setAddress(hubToEdit.location);
-      setImagesInput(hubToEdit.images.join(', '));
+      setUpiId(hubToEdit.upiId || '');
+      setImages(hubToEdit.images.length > 0 ? hubToEdit.images : ['']);
       setDescription(hubToEdit.description);
       setContactPhone(hubToEdit.contactPhone || '');
       setContactEmail(hubToEdit.contactEmail || '');
@@ -57,8 +60,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       if (hubToEdit.type === 'TURF') {
         setTurfSlots(hubToEdit.slots.map(s => ({
           id: s.id,
-          start: s.time.split(' - ')[0] || s.time,
-          end: s.time.split(' - ')[1] || '',
+          time: s.time,
           price: s.price.toString()
         })));
       } else if (hubToEdit.accessories) {
@@ -67,8 +69,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
           name: acc.name,
           slots: acc.slots.map(s => ({
             id: s.id,
-            start: s.time.split(' - ')[0] || s.time,
-            end: s.time.split(' - ')[1] || '',
+            time: s.time,
             price: s.price.toString()
           }))
         })));
@@ -76,79 +77,90 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
     }
   }, [hubToEdit]);
 
-  const addTurfSlot = () => {
-    setTurfSlots([...turfSlots, { id: 'ts' + Date.now(), start: '00:00', end: '00:00', price: '1000' }]);
+  const handleAddImage = () => setImages([...images, '']);
+  const handleUpdateImage = (idx: number, val: string) => {
+    const next = [...images];
+    next[idx] = val;
+    setImages(next);
+  };
+  const handleRemoveImage = (idx: number) => setImages(images.filter((_, i) => i !== idx));
+
+  const handleAddTurfSlot = () => setTurfSlots([...turfSlots, { id: 'ts'+Date.now(), time: '09:00 - 10:00', price: '1000' }]);
+  const handleRemoveTurfSlot = (id: string) => setTurfSlots(turfSlots.filter(s => s.id !== id));
+  const handleUpdateTurfSlot = (id: string, field: keyof SlotData, val: string) => {
+    setTurfSlots(turfSlots.map(s => s.id === id ? { ...s, [field]: val } : s));
   };
 
-  const removeTurfSlot = (id: string) => {
-    if (turfSlots.length > 1) setTurfSlots(turfSlots.filter(s => s.id !== id));
-  };
-
-  const addAccessory = () => {
-    setAccessories([...accessories, { 
-      id: 'acc' + Date.now(), 
-      name: '', 
-      slots: [{ id: 's' + Date.now(), start: '09:00', end: '10:00', price: '100' }] 
+  const handleAddAccessory = () => {
+    setAccessories([...accessories, {
+      id: 'acc'+Date.now(),
+      name: `Accessory ${accessories.length + 1}`,
+      slots: [{ id: 's'+Date.now(), time: '10:00 - 11:00', price: '150' }]
     }]);
   };
 
-  const removeAccessory = (id: string) => {
-    setAccessories(accessories.filter(a => a.id !== id));
+  const handleRemoveAccessory = (id: string) => {
+    if (accessories.length > 1) setAccessories(accessories.filter(a => a.id !== id));
   };
 
-  const addAccessorySlot = (accId: string) => {
-    setAccessories(accessories.map(a => 
-      a.id === accId 
-        ? { ...a, slots: [...a.slots, { id: 's' + Date.now(), start: '00:00', end: '00:00', price: '0' }] } 
-        : a
-    ));
+  const handleUpdateAccessory = (id: string, field: keyof AccessoryData, val: any) => {
+    setAccessories(accessories.map(acc => acc.id === id ? { ...acc, [field]: val } : acc));
   };
 
-  const removeAccessorySlot = (accId: string, slotId: string) => {
-    setAccessories(accessories.map(a => 
-      a.id === accId 
-        ? { ...a, slots: a.slots.filter(s => s.id !== slotId) } 
-        : a
-    ));
+  const handleAddSlotToAccessory = (accId: string) => {
+    setAccessories(accessories.map(acc => {
+      if (acc.id !== accId) return acc;
+      return {
+        ...acc,
+        slots: [...acc.slots, { id: 's'+Date.now(), time: '12:00 - 13:00', price: '150' }]
+      };
+    }));
   };
 
-  const updateTurfSlot = (id: string, field: keyof SlotData, value: string) => {
-    setTurfSlots(turfSlots.map(s => s.id === id ? { ...s, [field]: value } : s));
+  const handleRemoveSlotFromAccessory = (accId: string, slotId: string) => {
+    setAccessories(accessories.map(acc => {
+      if (acc.id !== accId) return acc;
+      return {
+        ...acc,
+        slots: acc.slots.filter(s => s.id !== slotId)
+      };
+    }));
   };
 
-  const updateAccessorySlot = (accId: string, slotId: string, field: keyof SlotData, value: string) => {
-    setAccessories(accessories.map(a => 
-      a.id === accId 
-        ? { ...a, slots: a.slots.map(s => s.id === slotId ? { ...s, [field]: value } : s) } 
-        : a
-    ));
+  const handleUpdateAccessorySlot = (accId: string, slotId: string, field: keyof SlotData, val: string) => {
+    setAccessories(accessories.map(acc => {
+      if (acc.id !== accId) return acc;
+      return {
+        ...acc,
+        slots: acc.slots.map(s => s.id === slotId ? { ...s, [field]: val } : s)
+      };
+    }));
   };
 
   const handleLaunch = () => {
-    if (!venueName || !address || !contactPhone || !contactEmail) {
-      alert("Please fill in all identity and contact details.");
+    if (!venueName || !address || !upiId) {
+      alert("Error: Venue Name, Address, and UPI ID are required.");
       return;
     }
 
-    const images = imagesInput.split(',').map(url => url.trim()).filter(url => url !== '');
-    if (images.length === 0) {
-      images.push('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200');
+    const validImages = images.filter(url => url.trim() !== '');
+    if (validImages.length === 0) {
+      validImages.push('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200');
     }
 
     const finalSlots: TimeSlot[] = turfSlots.map(ts => ({
       id: ts.id,
-      time: ts.end ? `${ts.start} - ${ts.end}` : ts.start,
+      time: ts.time,
       price: parseInt(ts.price) || 0,
       available: true
     }));
 
     const finalAccessories: Accessory[] = accessories.map(acc => ({
       id: acc.id,
-      name: acc.name || 'Unnamed Gear',
-      type: 'PC',
+      name: acc.name,
       slots: acc.slots.map(s => ({
         id: s.id,
-        time: s.end ? `${s.start} - ${s.end}` : s.start,
+        time: s.time,
         price: parseInt(s.price) || 0,
         available: true
       }))
@@ -159,258 +171,189 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       name: venueName,
       type: hubType,
       location: address,
+      upiId: upiId,
       rating: hubToEdit?.rating || 5.0,
-      images: images,
-      priceStart: hubType === 'TURF' ? (finalSlots[0]?.price || 0) : (finalAccessories[0]?.slots[0]?.price || 0),
-      description: description || `Premium ${hubType.toLowerCase()} experience in ${address}.`,
-      amenities: hubToEdit?.amenities || ['Parking', 'Drinking Water', 'Floodlights'],
+      images: validImages,
+      priceStart: hubType === 'TURF' ? (finalSlots[0]?.price || 0) : Math.min(...finalAccessories.map(a => a.slots[0]?.price || 9999)),
+      description: description || `Elite ${hubType.toLowerCase()} hub experience.`,
+      amenities: hubToEdit?.amenities || ['Parking', 'Water', 'Locker'],
       slots: hubType === 'TURF' ? finalSlots : [],
       accessories: hubType === 'GAMING CAFE' ? finalAccessories : undefined,
-      isBestSeller: hubToEdit?.isBestSeller || false,
       contactPhone,
-      contactEmail,
-      reviews: hubToEdit?.reviews || []
+      contactEmail
     };
 
     onSave(newHub);
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white">
+    <div className="min-h-screen bg-[#020617] text-white pb-20 font-inter">
       <Navbar role="owner" onLogout={onLogout} onNavigateHome={onNavigateHome} />
       
       <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] overflow-hidden shadow-2xl flex flex-col min-h-[80vh]">
-          <div className="p-12 pb-8 border-b border-slate-800/50">
-            <h1 className="text-6xl font-black text-white tracking-tighter uppercase mb-2">
-              {hubToEdit ? 'Edit Arena' : 'New Arena Intel'}
-            </h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Enter comprehensive venue details for public listing</p>
-          </div>
-          
-          <div className="flex-1 p-12 pt-10 space-y-16 overflow-y-auto max-h-[70vh] no-scrollbar">
-            {/* Section 1: Core Identity */}
-            <section className="space-y-10">
-              <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-[#10b981] rounded-full"></div>
-                <h3 className="text-xl font-black uppercase tracking-tight">Core Identity</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                <div className="space-y-4">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Official Venue Name</label>
-                  <input type="text" value={venueName} onChange={(e) => setVenueName(e.target.value)} placeholder="Neon Gaming Hub" className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Venue Type</label>
-                  <div className="relative">
-                    <select value={hubType} onChange={(e) => setHubType(e.target.value as any)} className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg appearance-none cursor-pointer">
-                      <option value="TURF" className="bg-[#0b1120]">Sports Turf</option>
-                      <option value="GAMING CAFE" className="bg-[#0b1120]">Gaming Cafe</option>
-                    </select>
+        <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] p-8 md:p-14 shadow-2xl space-y-16 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[120px] pointer-events-none"></div>
+
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-800 pb-10">
+            <div>
+              <h1 className="text-6xl font-black text-white tracking-tighter uppercase leading-none mb-4">Register Venue</h1>
+              <p className="text-emerald-500 font-black uppercase tracking-[0.4em] text-[10px]">Setup your hub for bookings</p>
+            </div>
+            <div className="flex bg-[#020617] border border-slate-800 p-1.5 rounded-2xl">
+              {['TURF', 'GAMING CAFE'].map((t) => (
+                <button 
+                  key={t} 
+                  onClick={() => setHubType(t as any)} 
+                  className={`px-10 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${hubType === t ? 'bg-[#10b981] text-[#020617] shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div className="space-y-12">
+              <section className="space-y-6">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">General Information</h3>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Venue Name</label>
+                    <input type="text" placeholder="e.g., G-FORCE ARENA" value={venueName} onChange={(e) => setVenueName(e.target.value)} className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-5 px-6 outline-none focus:border-emerald-500 text-white font-bold transition-all" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">UPI ID (For Payments)</label>
+                    <input type="text" placeholder="owner@upi-id" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full bg-[#020617] border border-emerald-500/30 rounded-2xl py-5 px-6 outline-none focus:border-emerald-500 text-emerald-400 font-black tracking-[0.1em]" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Address</label>
+                    <textarea rows={3} placeholder="Full address details..." value={address} onChange={(e) => setAddress(e.target.value)} className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-5 px-6 outline-none focus:border-emerald-500 text-white font-bold resize-none" />
                   </div>
                 </div>
-                <div className="space-y-4 col-span-full">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Full Address & Location</label>
-                  <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. 123 Cyber St, Mumbai, Maharashtra" className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg" />
-                </div>
-              </div>
-            </section>
+              </section>
 
-            {/* Section 2: Contact & Reach */}
-            <section className="space-y-10 bg-[#020617]/20 p-10 rounded-[40px] border border-slate-800/30">
-              <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
-                <h3 className="text-xl font-black uppercase tracking-tight">Business Contact Intel</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                <div className="space-y-4">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Official Phone No.</label>
-                  <input 
-                    type="tel" 
-                    value={contactPhone} 
-                    onChange={(e) => setContactPhone(e.target.value)} 
-                    placeholder="+91 00000 00000" 
-                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-blue-500 transition-all text-white font-semibold text-lg" 
-                  />
+              <section className="space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                  <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Images</h3>
+                  <button onClick={handleAddImage} className="text-emerald-500 text-[10px] font-black uppercase hover:text-emerald-400">+ Add Link</button>
                 </div>
                 <div className="space-y-4">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Official Business Email</label>
-                  <input 
-                    type="email" 
-                    value={contactEmail} 
-                    onChange={(e) => setContactEmail(e.target.value)} 
-                    placeholder="contact@venue.com" 
-                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-blue-500 transition-all text-white font-semibold text-lg" 
-                  />
+                  {images.map((img, idx) => (
+                    <div key={idx} className="flex gap-4">
+                      <input type="text" placeholder="https://image-url.jpg" value={img} onChange={(e) => handleUpdateImage(idx, e.target.value)} className="flex-1 bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 text-[12px] font-medium text-slate-300 outline-none focus:border-emerald-500" />
+                      {images.length > 1 && (
+                        <button onClick={() => handleRemoveImage(idx)} className="w-14 h-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </section>
+              </section>
+            </div>
 
-            {/* Section 3: Visuals & Narrative */}
-            <section className="space-y-10">
-              <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-purple-500 rounded-full"></div>
-                <h3 className="text-xl font-black uppercase tracking-tight">Visuals & Branding</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                <div className="space-y-4 col-span-full">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Gallery Image URLs (Comma Separated)</label>
-                  <textarea 
-                    rows={3}
-                    value={imagesInput} 
-                    onChange={(e) => setImagesInput(e.target.value)} 
-                    placeholder="https://img1.com, https://img2.com..." 
-                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg resize-none" 
-                  />
+            <div className="space-y-12">
+               <section className="space-y-6">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">Contact Details</h3>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Phone Number</label>
+                      <input type="text" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-white font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Email Address</label>
+                      <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-white font-bold" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Arena Details</label>
+                    <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-5 px-6 outline-none focus:border-emerald-500 text-white font-medium resize-none" />
+                  </div>
                 </div>
-                <div className="space-y-4 col-span-full">
-                  <label className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] block">Arena Description</label>
-                  <textarea 
-                    rows={4} 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)} 
-                    placeholder="Describe the premium experience at your venue..." 
-                    className="w-full bg-[#020617]/40 border border-slate-800 rounded-2xl py-6 px-8 outline-none focus:border-[#10b981] transition-all text-white font-semibold text-lg resize-none" 
-                  />
-                </div>
-              </div>
-            </section>
+              </section>
+            </div>
+          </div>
 
-            {/* Section 4: Slots & Inventory */}
-            <section className="pt-8 space-y-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                  <h3 className="text-xl font-black uppercase tracking-tight">
-                    {hubType === 'TURF' ? 'Time Slot Architecture' : 'Gear & Inventory Management'}
-                  </h3>
-                </div>
-                <button 
-                  onClick={hubType === 'TURF' ? addTurfSlot : addAccessory} 
-                  className="bg-[#10b981]/10 text-[#10b981] px-6 py-3 rounded-xl border border-[#10b981]/30 font-black text-[10px] uppercase tracking-widest hover:bg-[#10b981] hover:text-[#020617] transition-all"
-                >
-                  {hubType === 'TURF' ? '+ New Time Slot' : '+ New Gear Unit'}
+          <section className="pt-12 border-t border-slate-800 space-y-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <h3 className="text-4xl font-black uppercase tracking-tighter">Accessories & Schedule</h3>
+              {hubType === 'GAMING CAFE' && (
+                <button onClick={handleAddAccessory} className="bg-emerald-500 text-[#020617] px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.05] transition-all shadow-lg shadow-emerald-500/20">+ Add Accessory</button>
+              )}
+            </div>
+
+            {hubType === 'TURF' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {turfSlots.map(s => (
+                  <div key={s.id} className="bg-[#020617] border border-slate-800 p-8 rounded-[40px] space-y-6 hover:border-emerald-500/40 transition-all relative group">
+                    <button onClick={() => handleRemoveTurfSlot(s.id)} className="absolute top-4 right-4 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Time Window</label>
+                      <input value={s.time} onChange={(e) => handleUpdateTurfSlot(s.id, 'time', e.target.value)} className="w-full bg-transparent border-none text-2xl font-black text-white outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-emerald-500/60 uppercase tracking-widest">Price (₹)</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-black text-emerald-400">₹</span>
+                        <input value={s.price} onChange={(e) => handleUpdateTurfSlot(s.id, 'price', e.target.value)} className="w-full bg-transparent border-none text-4xl font-black text-emerald-400 outline-none" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button onClick={handleAddTurfSlot} className="border-2 border-dashed border-slate-800 rounded-[40px] flex flex-col items-center justify-center p-12 text-slate-700 hover:text-emerald-500 hover:border-emerald-500/30 transition-all group">
+                   <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-500 group-hover:text-black transition-all">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Add Slot</span>
                 </button>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-12">
+                {accessories.map(acc => (
+                  <div key={acc.id} className="bg-[#020617] border border-slate-800 rounded-[50px] p-10 space-y-10 relative group shadow-xl">
+                    <button onClick={() => handleRemoveAccessory(acc.id)} className="absolute top-8 right-8 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-2 text-[10px] font-black uppercase">
+                      Remove Accessory <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
 
-              {hubType === 'TURF' ? (
-                <div className="bg-[#020617]/30 border border-slate-800 rounded-[32px] p-8 space-y-4">
-                  {turfSlots.map((slot) => (
-                    <div key={slot.id} className="flex items-center gap-6 bg-[#0b1120] border border-slate-800 rounded-3xl p-5">
-                      <div className="flex-1 flex items-center gap-6">
-                        <div className="space-y-1">
-                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">Start</p>
-                          <input type="text" value={slot.start} onChange={(e) => updateTurfSlot(slot.id, 'start', e.target.value)} className="bg-transparent text-white font-black text-xl w-16 outline-none focus:text-[#10b981]" />
-                        </div>
-                        <span className="text-slate-700 font-black uppercase text-[10px] tracking-widest pt-4">To</span>
-                        <div className="space-y-1">
-                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">End</p>
-                          <input type="text" value={slot.end} onChange={(e) => updateTurfSlot(slot.id, 'end', e.target.value)} className="bg-transparent text-white font-black text-xl w-16 outline-none focus:text-[#10b981]" />
-                        </div>
+                    <div className="flex flex-col md:flex-row items-start justify-between gap-10 border-b border-slate-800/50 pb-8">
+                      <div className="space-y-2 flex-1 max-w-md">
+                         <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Accessory Name</label>
+                         <input value={acc.name} onChange={(e) => handleUpdateAccessory(acc.id, 'name', e.target.value)} className="w-full bg-transparent border-none text-4xl font-black text-white outline-none tracking-tighter" />
                       </div>
-                      <div className="flex items-center gap-3 bg-[#020617] border border-slate-800 rounded-2xl px-6 py-3">
-                        <span className="text-[#10b981] font-black text-lg">₹</span>
-                        <input type="text" value={slot.price} onChange={(e) => updateTurfSlot(slot.id, 'price', e.target.value)} className="w-16 bg-transparent text-white font-black text-lg outline-none" />
-                      </div>
-                      <button onClick={() => removeTurfSlot(slot.id)} className="text-slate-700 hover:text-red-400 transition-colors p-2">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                      {acc.slots.map(s => (
+                        <div key={s.id} className="bg-slate-900/40 border border-slate-800/60 p-6 rounded-[32px] relative group/slot transition-all hover:bg-slate-900">
+                           <button onClick={() => handleRemoveSlotFromAccessory(acc.id, s.id)} className="absolute top-3 right-3 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover/slot:opacity-100">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                           </button>
+                           <div className="space-y-4">
+                              <input value={s.time} onChange={(e) => handleUpdateAccessorySlot(acc.id, s.id, 'time', e.target.value)} className="w-full bg-transparent border-none text-[13px] font-black text-slate-400 outline-none" />
+                              <div className="flex items-center gap-1">
+                                 <span className="text-emerald-500 font-black text-lg">₹</span>
+                                 <input value={s.price} onChange={(e) => handleUpdateAccessorySlot(acc.id, s.id, 'price', e.target.value)} className="w-full bg-transparent border-none text-3xl font-black text-white outline-none" />
+                              </div>
+                           </div>
+                        </div>
+                      ))}
+                      <button onClick={() => handleAddSlotToAccessory(acc.id)} className="border border-dashed border-slate-800 rounded-[32px] flex items-center justify-center p-6 text-[10px] font-black uppercase text-slate-700 hover:text-emerald-500 hover:border-emerald-500/40 transition-all">
+                        + Add Slot
                       </button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-10">
-                  {accessories.map((acc) => (
-                    <div key={acc.id} className="bg-[#020617]/30 border border-slate-800 rounded-[48px] p-10 space-y-8 relative group/card">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex-1 flex items-center gap-6">
-                          <div className="bg-blue-600/10 text-blue-500 px-4 py-2 rounded-xl border border-blue-600/20 text-[10px] font-black tracking-widest">UNIT CONFIG</div>
-                          <input 
-                            type="text" 
-                            placeholder="Gear ID (e.g. RTX-PC-01)" 
-                            className="flex-1 bg-transparent text-3xl font-black text-white outline-none border-b border-transparent focus:border-blue-500 transition-all placeholder:text-slate-800" 
-                            value={acc.name} 
-                            onChange={(e) => setAccessories(accessories.map(a => a.id === acc.id ? { ...a, name: e.target.value } : a))} 
-                          />
-                        </div>
-                        <button 
-                          onClick={() => removeAccessory(acc.id)} 
-                          className="w-12 h-12 bg-red-900/10 text-red-500 border border-red-900/20 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all ml-4"
-                        >
-                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg>
-                        </button>
-                      </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-                      <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Available Time Blocks</p>
-                          <button 
-                            onClick={() => addAccessorySlot(acc.id)} 
-                            className="text-emerald-400 font-black text-[10px] uppercase tracking-widest hover:text-emerald-300 transition-colors flex items-center gap-2"
-                          >
-                            <span className="text-lg">+</span> Add Time Slot
-                          </button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {acc.slots.map((slot) => (
-                            <div key={slot.id} className="bg-[#0b1120] border border-slate-800 rounded-[28px] p-6 flex items-center justify-between group/slot hover:border-slate-600 transition-all">
-                              <div className="flex items-center gap-4">
-                                <div className="space-y-1">
-                                  <input 
-                                    type="text" 
-                                    value={slot.start} 
-                                    onChange={(e) => updateAccessorySlot(acc.id, slot.id, 'start', e.target.value)} 
-                                    className="bg-transparent text-white font-black text-lg w-16 outline-none focus:text-blue-400" 
-                                  />
-                                </div>
-                                <span className="text-slate-700 font-black text-xs">→</span>
-                                <div className="space-y-1">
-                                  <input 
-                                    type="text" 
-                                    value={slot.end} 
-                                    onChange={(e) => updateAccessorySlot(acc.id, slot.id, 'end', e.target.value)} 
-                                    className="bg-transparent text-white font-black text-lg w-16 outline-none focus:text-blue-400" 
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <div className="bg-[#020617] px-4 py-2 rounded-xl border border-slate-800 flex items-center gap-2">
-                                  <span className="text-emerald-400 font-black text-sm">₹</span>
-                                  <input 
-                                    type="text" 
-                                    value={slot.price} 
-                                    onChange={(e) => updateAccessorySlot(acc.id, slot.id, 'price', e.target.value)} 
-                                    className="w-12 bg-transparent text-white font-black text-sm outline-none" 
-                                  />
-                                </div>
-                                <button 
-                                  onClick={() => removeAccessorySlot(acc.id, slot.id)} 
-                                  className="p-2 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover/slot:opacity-100"
-                                >
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-
-          <div className="p-12 bg-slate-900/10 border-t border-slate-800 flex gap-6 mt-auto">
-            <button onClick={onBack} className="flex-1 py-7 bg-transparent border border-slate-800 text-slate-400 font-black rounded-[32px] hover:bg-slate-800/50 hover:text-white transition-all uppercase tracking-[0.25em] text-sm">Discard Changes</button>
-            <button onClick={handleLaunch} className="flex-[2] py-7 bg-[#10b981] hover:bg-[#34d399] text-[#020617] font-black rounded-[32px] transition-all shadow-[0_8px_32px_rgba(16,185,129,0.3)] uppercase tracking-[0.25em] text-sm">
-              {hubToEdit ? 'Save Data' : 'Launch Listing'}
-            </button>
-          </div>
+          <footer className="flex flex-col md:flex-row gap-8 pt-12 border-t border-slate-800">
+            <button onClick={onBack} className="flex-1 py-6 border border-slate-800 rounded-3xl font-black uppercase tracking-widest text-slate-500 hover:text-white hover:border-slate-500 transition-all">Cancel</button>
+            <button onClick={handleLaunch} className="flex-1 py-6 bg-emerald-500 text-[#020617] rounded-3xl font-black uppercase tracking-widest text-xl hover:scale-[1.02] hover:shadow-[0_12px_48px_rgba(16,185,129,0.3)] transition-all">Deploy Venue</button>
+          </footer>
         </div>
       </main>
     </div>

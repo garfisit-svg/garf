@@ -10,7 +10,6 @@ export interface TimeSlot {
 export interface Accessory {
   id: string;
   name: string;
-  type: 'PC' | 'CONSOLE' | 'SIMULATOR';
   slots: TimeSlot[];
 }
 
@@ -40,6 +39,7 @@ export interface Hub {
   isSoldOut?: boolean;
   contactPhone?: string;
   contactEmail?: string;
+  upiId?: string; // New: Owner's direct UPI ID for payments
   reviews?: Review[];
 }
 
@@ -55,14 +55,14 @@ export interface Booking {
   createdAt: number; // timestamp
   status: 'confirmed' | 'pending' | 'expired';
   paymentMethod: 'online' | 'cash' | 'upi';
+  transactionId?: string;
   accessoryName?: string;
-  playerCount?: number; // New: for turf share calculation
-  perPersonShare?: number; // New: calculated amount per player
+  playerCount?: number;
 }
 
 export interface PollOption {
   text: string;
-  votes: string[]; // nicknames of voters
+  votes: string[];
 }
 
 export interface Poll {
@@ -88,5 +88,5 @@ export interface ChatRoom {
   description: string;
   isGlobal: boolean;
   messages: ChatMessage[];
-  joinCode?: string; // 4-digit code for squads
+  joinCode?: string;
 }

@@ -96,7 +96,9 @@ const App: React.FC = () => {
             isSoldOut: h.is_sold_out,
             contactPhone: h.contact_phone,
             contactEmail: h.contact_email,
+            upiId: h.upi_id,
             slots: h.slots || [],
+            accessories: h.accessories || undefined
           })));
         }
 
@@ -231,7 +233,6 @@ const App: React.FC = () => {
     return data[0].id;
   };
 
-  // Fix: Added handleAuthSuccess to resolve the error in AuthView onSuccess prop
   const handleAuthSuccess = (nickname?: string) => {
     if (nickname) setUserNickname(nickname);
   };
@@ -284,8 +285,10 @@ const App: React.FC = () => {
           images: hubData.images,
           contact_phone: hubData.contactPhone,
           contact_email: hubData.contactEmail,
+          upi_id: hubData.upiId,
           is_sold_out: hubData.isSoldOut,
           slots: hubData.slots,
+          accessories: hubData.accessories || null,
           owner_id: sessionUser.id
         };
         if (editingHub) {
