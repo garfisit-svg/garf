@@ -54,7 +54,7 @@ export interface Booking {
   date: string;
   createdAt: number; // timestamp
   status: 'confirmed' | 'pending' | 'expired';
-  paymentMethod: 'online' | 'cash';
+  paymentMethod: 'online' | 'cash' | 'upi';
   accessoryName?: string;
   playerCount?: number; // New: for turf share calculation
   perPersonShare?: number; // New: calculated amount per player

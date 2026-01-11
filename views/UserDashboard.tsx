@@ -57,7 +57,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const activeRoom = chatRooms.find(r => r.id === activeRoomId) || chatRooms[0];
   
-  // High-performance filtering and sorting
   const processedHubs = hubs
     .filter(h => {
       const matchesSearch = h.name.toLowerCase().includes(search.toLowerCase()) || h.location.toLowerCase().includes(search.toLowerCase());
@@ -71,7 +70,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
       return 0;
     });
 
-  // Top Rated Marquee Data (Rating 4.7+)
   const topRatedHubs = hubs.filter(h => h.rating >= 4.7).sort((a, b) => b.rating - a.rating);
 
   const handleSendText = (e: React.FormEvent) => {
@@ -135,12 +133,19 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     setPollOptions(next);
   };
 
+  const getPaymentBadge = (method: string) => {
+    switch(method) {
+      case 'upi': return <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded uppercase">UPI</span>;
+      case 'online': return <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded uppercase">Card</span>;
+      default: return <span className="text-[9px] font-black text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded uppercase">Cash</span>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-white flex flex-col overflow-x-hidden">
       <Navbar role="user" onLogout={onLogout} onNavigateHome={onNavigateHome} />
 
       <main className="max-w-[1600px] w-full mx-auto py-4 md:py-8 flex-1 flex flex-col">
-        {/* Navigation Tabs */}
         <div className="px-4 md:px-6 mb-8 flex justify-center overflow-x-auto no-scrollbar shrink-0">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[28px] p-1.5 flex gap-1 shadow-2xl shrink-0">
             {['explore', 'community', 'history'].map((t) => (
@@ -157,7 +162,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
         {activeTab === 'explore' && (
           <div className="space-y-8 animate-in fade-in duration-700">
-             {/* Hero Section */}
              <section className="px-4 md:px-6">
               <div className="relative w-full rounded-[40px] md:rounded-[60px] overflow-hidden min-h-[380px] flex flex-col items-center justify-center text-center p-8 border border-slate-800/30 shadow-[0_0_100px_rgba(16,185,129,0.05)]">
                 <div className="absolute inset-0 z-0">
@@ -167,13 +171,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                   <h1 className="text-4xl md:text-7xl font-black text-white leading-none uppercase tracking-tighter animate-in slide-in-from-bottom-6 duration-700">
                     THE ARENA<br/><span className="bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent italic">IS YOURS</span>
                   </h1>
-                  
                   <div className="space-y-1">
                     <p className="text-emerald-400 text-[10px] md:text-xs font-black uppercase tracking-[0.4em]">Decentralised Venue Discovery • Real-Time Coordination</p>
                     <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">Unleash the athlete and gamer within through the Garf secure network.</p>
                   </div>
-                  
-                  {/* Search Bar */}
                   <div className="relative w-full max-w-2xl mx-auto mt-4">
                     <div className="absolute left-6 top-1/2 -translate-y-1/2"><SearchIcon className="w-5 h-5 text-emerald-400" /></div>
                     <input 
@@ -188,7 +189,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
             </section>
 
-             {/* Top Rated Marquee - Moving above the Garf Buzz */}
              {topRatedHubs.length > 0 && (
                <section className="overflow-hidden bg-transparent">
                   <div className="flex gap-6 animate-marquee whitespace-nowrap px-6">
@@ -211,7 +211,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                </section>
              )}
 
-             {/* GARF BUZZ Marquee - Styled as Rectangular Boxes below Search & Top Rated */}
              <section className="overflow-hidden bg-transparent py-4">
                 <div className="flex gap-6 animate-marquee whitespace-nowrap px-6">
                   {[...GARF_BUZZ, ...GARF_BUZZ, ...GARF_BUZZ].map((item, i) => (
@@ -227,7 +226,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 </div>
              </section>
 
-             {/* Filter & Sort Controls - Strategic Deployment Filters */}
              <section className="px-4 md:px-6">
                 <div className="bg-[#0b1120]/40 backdrop-blur-xl border border-slate-800 rounded-[32px] p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full md:w-auto p-1">
@@ -245,7 +243,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                         </button>
                       ))}
                    </div>
-
                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full md:w-auto p-1 items-center">
                       <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Tactical Sort</span>
                       {[
@@ -326,12 +323,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 </div>
                 <button onClick={() => setShowPollCreator(true)} className="bg-purple-600/10 text-purple-400 border border-purple-500/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">Tactical Poll</button>
               </div>
-
               <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
                 {activeRoom?.messages.map((m) => (
                   <div key={m.id} className={`flex flex-col ${m.senderNickname === nickname ? 'items-end' : 'items-start'} ${m.isSystem ? 'items-center' : ''}`}>
                     {!m.isSystem && <p className="text-[8px] font-black text-slate-600 uppercase mb-1 px-2">{m.senderNickname}</p>}
-                    
                     {m.type === 'poll' && m.poll ? (
                       <div className="bg-slate-800 rounded-[28px] p-6 border border-slate-700 w-full max-w-sm space-y-4">
                         <p className="text-xs font-black uppercase tracking-widest text-emerald-400">Tactical Poll</p>
@@ -359,7 +354,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 ))}
                 <div ref={chatEndRef} />
               </div>
-
               <form onSubmit={handleSendText} className="p-6 bg-[#020617]/60 border-t border-slate-800 flex gap-3 backdrop-blur-3xl">
                 <input type="text" placeholder="Enter comms..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 bg-[#0b1120] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-emerald-500 text-sm font-bold" />
                 <button type="submit" className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-black">
@@ -373,14 +367,28 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         {activeTab === 'history' && (
           <section className="px-4 py-12 max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-4xl font-black uppercase mb-12">Mission Log</h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {bookings.length === 0 ? (
-                <div className="text-center py-20 border border-dashed border-slate-800 rounded-3xl"><p className="text-slate-600 font-black uppercase">No operations found</p></div>
+                <div className="text-center py-20 border border-dashed border-slate-800 rounded-[40px] bg-[#0b1120]/50">
+                  <p className="text-slate-600 font-black uppercase tracking-widest">No operations found in archive</p>
+                </div>
               ) : (
                 bookings.map(b => (
-                  <div key={b.id} className="bg-[#0b1120] border border-slate-800 p-6 rounded-[32px] flex justify-between items-center transition-all hover:border-emerald-500/30">
-                    <div><h4 className="text-xl font-black uppercase">{b.hubName}</h4><p className="text-xs text-slate-500 font-bold uppercase">{b.slotTime}</p></div>
-                    <div className={`px-4 py-1 rounded-lg text-[10px] font-black uppercase ${b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-yellow-500/10 text-yellow-500'}`}>{b.status}</div>
+                  <div key={b.id} className="bg-[#0b1120] border border-slate-800 p-8 rounded-[32px] flex flex-col md:flex-row justify-between items-center gap-6 transition-all hover:border-emerald-500/30">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="text-2xl font-black uppercase">{b.hubName}</h4>
+                        {getPaymentBadge(b.paymentMethod)}
+                      </div>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{b.slotTime} • {b.date}</p>
+                      <p className="text-[10px] text-slate-700 font-black uppercase mt-3">REF ID: {b.id.substring(0,8).toUpperCase()}</p>
+                    </div>
+                    <div className="flex items-center gap-8">
+                       <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-600 uppercase mb-1">Status</p>
+                          <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase border ${b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>{b.status}</div>
+                       </div>
+                    </div>
                   </div>
                 ))
               )}
@@ -389,15 +397,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
         )}
       </main>
 
-      {/* MODALS */}
       {showSquadModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#020617]/90 backdrop-blur-2xl">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
             <div className="flex justify-between items-start mb-8">
               <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Tactical Squad</h3>
-              <button onClick={() => setShowSquadModal(false)} className="text-slate-500 hover:text-white">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <button onClick={() => setShowSquadModal(false)} className="text-slate-500 hover:text-white"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             <div className="flex gap-2 p-1 bg-[#020617] rounded-2xl border border-slate-800 mb-8">
               <button onClick={() => setSquadModalTab('create')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${squadModalTab === 'create' ? 'bg-[#10b981] text-black' : 'text-slate-500'}`}>Create Frequency</button>
@@ -431,9 +436,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
           <div className="bg-[#0b1120] border border-slate-800 rounded-[48px] p-10 w-full max-w-xl shadow-2xl animate-in fade-in zoom-in duration-300">
              <div className="flex justify-between items-start mb-8">
               <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Tactical Poll</h3>
-              <button onClick={() => setShowPollCreator(false)} className="text-slate-500 hover:text-white">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <button onClick={() => setShowPollCreator(false)} className="text-slate-500 hover:text-white"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             <form onSubmit={handleCreatePollSubmit} className="space-y-8">
               <div className="space-y-2">
@@ -441,10 +444,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Pick our drop zone?" className="w-full bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 outline-none focus:border-purple-500 text-white font-bold" />
               </div>
               <div className="space-y-4">
-                 <div className="flex justify-between items-center">
-                   <label className="text-[10px] font-black text-slate-500 uppercase">Tactical Options</label>
-                   <button type="button" onClick={addPollOption} className="text-purple-400 text-[10px] font-black uppercase hover:text-purple-300 transition-all">+ Add Option</button>
-                 </div>
+                 <div className="flex justify-between items-center"><label className="text-[10px] font-black text-slate-500 uppercase">Tactical Options</label><button type="button" onClick={addPollOption} className="text-purple-400 text-[10px] font-black uppercase hover:text-purple-300 transition-all">+ Add Option</button></div>
                  <div className="space-y-3 max-h-[200px] overflow-y-auto no-scrollbar">
                     {pollOptions.map((opt, idx) => (
                       <input key={idx} type="text" value={opt} onChange={(e) => updatePollOption(idx, e.target.value)} placeholder={`Option ${idx + 1}`} className="w-full bg-[#020617] border border-slate-800 rounded-xl py-3 px-5 outline-none focus:border-purple-500 text-sm font-bold text-white" />
@@ -456,21 +456,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
           </div>
         </div>
       )}
-
       <style>{`
-        @keyframes marquee { 
-          0% { transform: translateX(0); } 
-          100% { transform: translateX(-50%); } 
-        }
-        .animate-marquee { 
-          animation: marquee 35s linear infinite; 
-          width: max-content; 
-          display: flex; 
-        }
-        .animate-marquee:hover {
-          animation-play-state: paused;
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-marquee { animation: marquee 35s linear infinite; width: max-content; display: flex; }
+        .animate-marquee:hover { animation-play-state: paused; }
       `}</style>
     </div>
   );
