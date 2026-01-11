@@ -50,7 +50,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
           <div className="w-8 h-8 rounded-full border border-slate-800 flex items-center justify-center group-hover:border-slate-500 transition-all">
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </div>
-          ABORT TO BROWSE
+          BACK TO BROWSE
         </button>
 
         <div className="grid lg:grid-cols-[1fr_420px] gap-16">
@@ -71,7 +71,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
               {/* ACCESSORY PICKER FOR GAMING CAFES */}
               {hub.type === 'GAMING CAFE' && hub.accessories && (
                 <div className="bg-[#0b1120] border border-slate-800 rounded-[50px] p-10 shadow-xl">
-                  <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-8">Phase 1: Select Accessory</h3>
+                  <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-8">1. Select Item</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {hub.accessories.map(acc => (
                       <button 
@@ -94,7 +94,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
               {/* SLOT PICKER */}
               <div className="bg-[#0b1120] border border-slate-800 rounded-[50px] p-10 shadow-xl">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-8">
-                  {hub.type === 'GAMING CAFE' ? 'Phase 2: Tactical Slot' : 'Operational Time Slots'}
+                  {hub.type === 'GAMING CAFE' ? '2. Select Time Slot' : 'Available Time Slots'}
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                   {currentSlots.length > 0 ? currentSlots.map(slot => (
@@ -108,7 +108,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                     </button>
                   )) : (
                     <div className="col-span-full py-10 text-center opacity-30">
-                       <p className="text-[10px] font-black uppercase tracking-widest">No active slots found</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest">No slots available</p>
                     </div>
                   )}
                 </div>
@@ -120,7 +120,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
             <div className="bg-[#0b1120] border border-slate-800 rounded-[50px] p-12 sticky top-32 shadow-2xl space-y-10 overflow-hidden relative">
               <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 blur-[80px] pointer-events-none"></div>
               
-              <h3 className="text-3xl font-black text-white uppercase mb-8 tracking-tighter">Order Intel</h3>
+              <h3 className="text-3xl font-black text-white uppercase mb-8 tracking-tighter">Booking Summary</h3>
               
               {selectedSlot ? (
                 <div className="space-y-8 animate-in fade-in duration-500">
@@ -132,11 +132,11 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                       </div>
                     )}
                     <div className="flex justify-between items-center border-b border-slate-800/50 pb-4">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mission Time</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Time</span>
                       <span className="text-sm font-black text-white uppercase">{selectedSlot.time}</span>
                     </div>
                     <div className="flex justify-between items-center pt-2">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Due</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Amount</span>
                       <span className="text-4xl font-black text-emerald-400 tracking-tighter">₹{selectedSlot.price}</span>
                     </div>
                   </div>
@@ -144,16 +144,16 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                   <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-[32px]">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Direct-to-Bank Verified</p>
+                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Verified Payment</p>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Your payment goes directly to the owner's linked UPI: <span className="text-white font-bold">{hub.upiId}</span></p>
+                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Direct transfer to owner: <span className="text-white font-bold">{hub.upiId}</span></p>
                   </div>
 
                   <button 
                     onClick={() => setShowPaymentModal(true)} 
                     className="w-full py-6 bg-emerald-500 text-[#020617] font-black rounded-[28px] uppercase tracking-widest text-sm hover:scale-[1.03] transition-all shadow-[0_12px_48px_rgba(16,185,129,0.3)]"
                   >
-                    Initialize Payout
+                    Proceed to Payment
                   </button>
                 </div>
               ) : (
@@ -161,7 +161,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                   <div className="w-16 h-16 bg-slate-700 rounded-full mx-auto flex items-center justify-center">
                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   </div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.4em] px-8 leading-loose">Waiting for selection to generate check-out intel</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.4em] px-8 leading-loose">Select a slot to continue</p>
                 </div>
               )}
             </div>
@@ -175,7 +175,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
           <div className="bg-[#0b1120] border border-slate-800 rounded-[70px] p-14 w-full max-w-xl shadow-2xl text-center space-y-10 animate-in zoom-in duration-300 border-t-emerald-500/50">
             <header>
               <h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none mb-3">Direct Transfer</h2>
-              <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Scanned Payout to {hub.name}</p>
+              <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Pay to {hub.name}</p>
             </header>
 
             <div className="relative group mx-auto inline-block">
@@ -188,19 +188,19 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
             <div className="space-y-6">
               <div>
                 <p className="text-5xl font-black text-white tracking-tighter">₹{selectedSlot?.price}</p>
-                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Confirmed Amount</p>
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Total Amount</p>
               </div>
               
               <div className="flex flex-col gap-3">
-                <a href={upiLink} className="md:hidden w-full py-5 bg-white text-[#020617] font-black rounded-3xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">Launch Mobile UPI App</a>
+                <a href={upiLink} className="md:hidden w-full py-5 bg-white text-[#020617] font-black rounded-3xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">Open UPI App</a>
                 <button 
                   onClick={handleConfirmPayment} 
                   disabled={isProcessing} 
                   className="w-full py-5 bg-emerald-500 text-[#020617] font-black rounded-3xl uppercase tracking-widest text-xs disabled:opacity-50 transition-all hover:scale-[1.02]"
                 >
-                  {isProcessing ? 'Synchronizing Bank Record...' : 'I Have Transferred Credits'}
+                  {isProcessing ? 'Verifying...' : 'I Have Sent Payment'}
                 </button>
-                <button onClick={() => setShowPaymentModal(false)} className="text-[11px] font-black text-slate-600 uppercase tracking-widest hover:text-red-500 transition-colors">Abort Transaction</button>
+                <button onClick={() => setShowPaymentModal(false)} className="text-[11px] font-black text-slate-600 uppercase tracking-widest hover:text-red-500 transition-colors">Cancel</button>
               </div>
             </div>
 
