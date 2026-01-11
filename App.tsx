@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserRole, Hub, Booking, ChatRoom, ChatMessage, Poll } from './types';
 import LandingView from './views/LandingView';
 import AuthView from './views/AuthView';
@@ -25,7 +25,14 @@ const App: React.FC = () => {
     { id: 'global', name: 'Global Arena Chat', description: 'Main communication hub for all players.', isGlobal: true, messages: [] }
   ]);
 
+  // Ref to track the current view safely inside the auth listener closure
+  const viewRef = useRef(view);
   useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setSessionUser(session.user);
@@ -39,12 +46,28 @@ const App: React.FC = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSessionUser(session?.user ?? null);
-      if (!session) {
-        setView('landing');
-        setHubs([]);
-        setBookings([]);
+    // Unified Auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const user = session?.user ?? null;
+      setSessionUser(user);
+      
+      if (user) {
+        const role = user.user_metadata?.role as UserRole;
+        const nickname = user.user_metadata?.nickname;
+        setAuthType(role);
+        setUserNickname(nickname || (role === 'owner' ? 'Owner' : 'Player'));
+        
+        // Force navigate to dashboard only if we are currently on Landing or Auth views
+        if (viewRef.current === 'landing' || viewRef.current === 'auth') {
+          setView(role === 'owner' ? 'owner' : 'user');
+        }
+      } else {
+        // Handle Logout or Session Expiry: kick to landing if in a protected view
+        if (viewRef.current !== 'landing' && viewRef.current !== 'auth') {
+          setView('landing');
+          setHubs([]);
+          setBookings([]);
+        }
       }
     });
 
@@ -53,6 +76,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Don't fetch if we're on non-data views
       if (isDemoMode() || view === 'landing' || view === 'auth') {
         setIsLoading(false);
         return;
@@ -75,7 +99,7 @@ const App: React.FC = () => {
             priceStart: h.price_start,
             isSoldOut: h.is_sold_out,
             contactPhone: h.contact_phone,
-            contactEmail: h.contact_email,
+            contact_email: h.contact_email,
             slots: h.slots || [],
           })));
         }
@@ -94,7 +118,8 @@ const App: React.FC = () => {
         }
 
         if (bookingsQuery) {
-          const { data: bookingsData } = await bookingsQuery;
+          const { data: bookingsData, error: bookingsError } = await bookingsQuery;
+          if (bookingsError) throw bookingsError;
           if (bookingsData) setBookings(bookingsData as any);
         }
 
@@ -222,7 +247,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Added handleLogout to fix missing name errors and handle session termination
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -232,9 +256,26 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
-      {view === 'landing' && <LandingView onStartAuth={(role) => { setAuthType(role); setView('auth'); }} onBrowseGuest={() => { setAuthType('guest'); setView('user'); }} />}
-      {view === 'auth' && <AuthView type={authType} onBack={() => setView('landing')} onSuccess={handleAuthSuccess} />}
+    <div className="min-h-screen bg-[#020617] text-slate-100 font-sans">
+      {view === 'landing' && (
+        <LandingView 
+          onStartAuth={(role) => { 
+            setAuthType(role); 
+            setView('auth'); 
+          }} 
+          onBrowseGuest={() => { 
+            setAuthType('guest'); 
+            setView('user'); 
+          }} 
+        />
+      )}
+      {view === 'auth' && (
+        <AuthView 
+          type={authType} 
+          onBack={() => setView('landing')} 
+          onSuccess={handleAuthSuccess} 
+        />
+      )}
       {view === 'user' && (
         <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={(h) => { setSelectedHub(h); setView('hub-detail'); }} onNavigateHome={() => setView('user')} onSendMessage={handleSendMessage} onVotePoll={handleVotePoll} onCreateSquad={handleCreateSquad} onJoinSquad={handleJoinSquad} />
       )}

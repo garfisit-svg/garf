@@ -247,11 +247,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                    </div>
 
                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full md:w-auto p-1 items-center">
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Sort by</span>
+                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest mr-2 hidden md:block">Tactical Sort</span>
                       {[
-                        { id: 'RATING', label: 'Top Rated' },
-                        { id: 'PRICE_LOW', label: 'Low Price' },
-                        { id: 'PRICE_HIGH', label: 'High Price' }
+                        { id: 'RATING', label: 'Top Intel' },
+                        { id: 'PRICE_LOW', label: 'Credits: Low' },
+                        { id: 'PRICE_HIGH', label: 'Credits: High' }
                       ].map((sort) => (
                         <button 
                           key={sort.id}
