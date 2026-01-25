@@ -104,7 +104,8 @@ const App: React.FC = () => {
               slotTime: b.slot_time,
               hubName: b.hub_name,
               totalPrice: Number(b.total_price) || 0,
-              status: b.status
+              status: b.status,
+              playerCount: b.player_count || 1
            })));
         }
       } catch (err: any) {
@@ -118,12 +119,43 @@ const App: React.FC = () => {
     fetchData();
   }, [view, refreshTrigger, sessionUser]);
 
-  const handleSaveHub = async (hubData: Hub) => {
+  const handleBook = async (bookingData: any) => {
     if (!sessionUser) {
-      alert("Authentication Error: You must be logged in to deploy a venue.");
+      alert("Please login to complete your reservation.");
       return;
     }
-    
+
+    const payload = {
+      hub_id: bookingData.hubId,
+      hub_name: bookingData.hubName,
+      slot_time: bookingData.slotTime,
+      user_id: sessionUser.id,
+      user_name: userNickname,
+      base_price: bookingData.basePrice,
+      service_fee: bookingData.serviceFee,
+      total_price: bookingData.totalPrice,
+      player_count: bookingData.playerCount || 1,
+      payment_method: 'upi',
+      status: 'pending',
+      accessory_name: bookingData.accessoryName,
+      date: new Date().toLocaleDateString()
+    };
+
+    try {
+      const { error: bookingError } = await supabase.from('bookings').insert([payload]);
+      if (bookingError) throw bookingError;
+      
+      setRefreshTrigger(p => p + 1);
+      setView('user');
+      alert("RESERVATION SECURED: Check your history for verification status.");
+    } catch (err: any) {
+      console.error("Booking failed:", err);
+      alert(`BOOKING FAILED: ${err.message}`);
+    }
+  };
+
+  const handleSaveHub = async (hubData: Hub) => {
+    if (!sessionUser) return;
     const payload: any = {
       name: hubData.name,
       type: hubData.type,
@@ -139,7 +171,6 @@ const App: React.FC = () => {
       accessories: hubData.accessories || null,
       owner_id: sessionUser.id
     };
-
     try {
       let result;
       if (editingHub) {
@@ -147,7 +178,6 @@ const App: React.FC = () => {
       } else {
         result = await supabase.from('hubs').insert([payload]).select();
       }
-      
       if (result.error) throw result.error;
       setRefreshTrigger(p => p + 1);
       setView('owner');
@@ -158,47 +188,14 @@ const App: React.FC = () => {
   };
 
   const handleDeleteHub = async (id: string) => {
-    console.log("--- STARTING DELETION SEQUENCE ---");
-    console.log("Target ID:", id);
-    console.log("Current User Session:", sessionUser?.id);
-    
     setIsDeleting(true);
-    
     try {
-      // Step 1: Force a delete operation
-      // Note: We use .select() to ensure we get confirmation of what was actually deleted
-      const { data, error } = await supabase
-        .from('hubs')
-        .delete()
-        .eq('id', id)
-        .select();
-      
-      if (error) {
-        console.error("Supabase Error Response:", error);
-        setError(`DB Error: ${error.message}`);
-        setIsDeleting(false);
-        return;
-      }
-
-      console.log("Supabase Success Response Data:", data);
-
-      if (!data || data.length === 0) {
-        console.warn("DELETION FAILED: 0 rows affected. Check RLS policies.");
-        const rlsPrompt = `
--- COPY THIS INTO SUPABASE SQL EDITOR --
-DROP POLICY IF EXISTS "owner_full_control" ON hubs;
-CREATE POLICY "owner_full_control" ON hubs FOR ALL USING (auth.uid()::text = owner_id::text);
-ALTER TABLE hubs ENABLE ROW LEVEL SECURITY;
-        `.trim();
-        setError(`Security Lock: 0 venues were removed. Your RLS policy likely blocks "Delete" for your user ID.\n\nFix script available in console.`);
-        console.log(rlsPrompt);
-      } else {
-        console.log("DELETION CONFIRMED. Refreshing state...");
-        setRefreshTrigger(p => p + 1);
-        setError(null);
-      }
+      const { data, error } = await supabase.from('hubs').delete().eq('id', id).select();
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Deletion rejected by RLS.");
+      setRefreshTrigger(p => p + 1);
+      setError(null);
     } catch (err: any) {
-      console.error("Critical Exception in Delete:", err);
       setError(`Critical Error: ${err.message}`);
     } finally {
       setIsDeleting(false);
@@ -215,7 +212,7 @@ ALTER TABLE hubs ENABLE ROW LEVEL SECURITY;
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 font-sans">
       {error && (
-        <div className="fixed bottom-10 right-10 z-[1000] bg-red-600 text-white p-6 rounded-2xl shadow-2xl max-w-md animate-in slide-in-from-right-10">
+        <div className="fixed bottom-10 right-10 z-[1000] bg-red-600 text-white p-6 rounded-2xl shadow-2xl max-w-md">
           <h4 className="font-black uppercase text-xs mb-2">Operation Error</h4>
           <p className="text-xs font-bold leading-relaxed">{error}</p>
           <button onClick={() => setError(null)} className="mt-4 bg-white/20 hover:bg-white/40 px-4 py-2 rounded-xl text-[10px] font-black uppercase">Dismiss</button>
@@ -226,7 +223,7 @@ ALTER TABLE hubs ENABLE ROW LEVEL SECURITY;
         <div className="fixed inset-0 z-[2000] bg-[#020617]/80 backdrop-blur-md flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-            <p className="text-sm font-black text-white uppercase tracking-[0.3em]">Decommissioning Venue...</p>
+            <p className="text-sm font-black text-white uppercase tracking-[0.3em]">Processing...</p>
           </div>
         </div>
       )}
@@ -237,7 +234,7 @@ ALTER TABLE hubs ENABLE ROW LEVEL SECURITY;
         <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={(h) => { setSelectedHub(h); setView('hub-detail'); }} onNavigateHome={() => setView('user')} onSendMessage={() => {}} onVotePoll={() => {}} onCreateSquad={() => Promise.resolve('0')} onJoinSquad={() => Promise.resolve(null)} />
       )}
       {view === 'hub-detail' && selectedHub && (
-        <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={() => {}} onPostReview={() => {}} allBookings={bookings} />
+        <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={handleBook} onPostReview={() => {}} allBookings={bookings} />
       )}
       {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={async (id, status) => { await supabase.from('bookings').update({ status }).eq('id', id); setRefreshTrigger(p => p + 1); }} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={handleDeleteHub} onToggleSoldOut={async (id) => { const h = hubs.find(h => h.id === id); if(h) await supabase.from('hubs').update({ is_sold_out: !h.isSoldOut }).eq('id', id); setRefreshTrigger(p => p + 1); }} onNavigateHome={() => setView('owner')} />}
       {view === 'hub-register' && <HubRegisterView onBack={() => setView('owner')} onLogout={handleLogout} onNavigateHome={() => setView('owner')} hubToEdit={editingHub || undefined} onSave={handleSaveHub} />}
