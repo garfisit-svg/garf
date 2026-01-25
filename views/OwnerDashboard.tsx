@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import { Booking, Hub } from '../types';
 
@@ -52,16 +52,43 @@ interface OwnerDashboardProps {
 
 const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, sessionUser, onUpdateBookingStatus, onLogout, onAddHub, onEditHub, onDeleteHub, onToggleSoldOut, onNavigateHome }) => {
   const [activeTab, setActiveTab] = useState<'hubs' | 'bookings' | 'stats'>('hubs');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // Strict ownership check. We use sessionUser.id to filter the global hubs list.
   const myHubs = hubs.filter(h => String(h.owner_id) === String(sessionUser?.id));
   const myHubIds = myHubs.map(h => h.id);
   const myBookings = bookings.filter(b => myHubIds.includes(b.hubId));
+
+  const handleDeleteTrigger = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  const executeDelete = () => {
+    if (confirmDeleteId) {
+      onDeleteHub(confirmDeleteId);
+      setConfirmDeleteId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
       <Navbar role="owner" onLogout={onLogout} onNavigateHome={onNavigateHome} />
       
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-[3000] bg-[#020617]/95 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="bg-[#0b1120] border border-red-500/30 rounded-[40px] p-12 w-full max-w-md text-center shadow-2xl animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-red-600/10 border border-red-600/20 rounded-full flex items-center justify-center mx-auto mb-8">
+              <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </div>
+            <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Confirm Deletion</h3>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest leading-relaxed mb-10">This will decommission the venue and wipe all associated data. This action cannot be undone.</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={executeDelete} className="w-full py-5 bg-red-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs hover:bg-red-500 transition-all">Decommission Venue</button>
+              <button onClick={() => setConfirmDeleteId(null)} className="w-full py-5 bg-slate-800 text-slate-400 font-black rounded-2xl uppercase tracking-widest text-xs hover:bg-slate-700 transition-all">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-7xl mx-auto px-6 py-12">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
@@ -170,29 +197,39 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, session
                 const count = bookings.filter(b => b.hubId === hub.id && b.status === 'confirmed').length;
                 return (
                   <div key={hub.id} className="bg-[#0b1120] border border-slate-800 rounded-[40px] overflow-hidden group transition-all hover:border-slate-600">
-                    <div className="relative h-64 w-full">
-                      <img src={hub.images[0]} className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${hub.isSoldOut ? 'grayscale contrast-125' : ''}`} alt="" />
+                    <div className="relative h-64 w-full overflow-hidden">
+                      <img src={hub.images[0]} className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${hub.isSoldOut ? 'grayscale contrast-125' : ''}`} alt="" />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] to-transparent opacity-80"></div>
                       
-                      <div className="absolute top-8 left-8 bg-[#020617]/90 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-700/50 flex flex-col items-start gap-1">
-                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Garf Free Period</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-black text-white">{count}</span>
-                          <span className="text-[10px] font-bold text-slate-600">/ 50</span>
-                        </div>
-                        <div className="w-24 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
-                          <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${Math.min(100, (count / 50) * 100)}%` }}></div>
-                        </div>
-                      </div>
+                      <button 
+                        onClick={(e) => { 
+                          e.preventDefault(); 
+                          e.stopPropagation(); 
+                          handleDeleteTrigger(hub.id); 
+                        }} 
+                        className="absolute top-6 left-6 z-[100] w-14 h-14 bg-red-600/90 hover:bg-red-500 backdrop-blur-md border border-red-400 rounded-2xl flex items-center justify-center text-white hover:scale-110 active:scale-90 transition-all shadow-[0_8px_32px_rgba(220,38,38,0.5)] cursor-pointer"
+                        aria-label="Decommission Venue"
+                      >
+                        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
 
-                      {hub.isSoldOut && <div className="absolute top-8 right-8 bg-red-600 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest animate-pulse">Sold Out</div>}
-                      <div className="absolute bottom-8 left-8">
-                        <h4 className="text-4xl font-black text-white tracking-tighter mb-1 uppercase">{hub.name}</h4>
+                      <div className="absolute top-6 right-6 flex flex-col items-end gap-3 z-30">
+                        <div className="bg-[#020617]/90 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-700/50 flex flex-col items-end gap-1">
+                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Bookings</span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-black text-white">{count}</span>
+                            <span className="text-[10px] font-bold text-slate-600">/ 50</span>
+                          </div>
+                        </div>
+                        {hub.isSoldOut && <div className="bg-red-600 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest animate-pulse border border-red-400">Sold Out</div>}
+                      </div>
+                      
+                      <div className="absolute bottom-8 left-8 pr-16 z-30">
+                        <h4 className="text-4xl font-black text-white tracking-tighter mb-1 uppercase truncate max-w-xs">{hub.name}</h4>
                         <p className="text-slate-400 font-black text-sm tracking-widest uppercase">{hub.location}</p>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); onDeleteHub(hub.id); }} className="absolute top-8 right-8 w-12 h-12 bg-red-600/20 backdrop-blur-md border border-red-500/30 rounded-2xl flex items-center justify-center text-red-500 hover:bg-red-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
                     </div>
                     <div className="p-8 flex gap-4">
                       <button onClick={() => onToggleSoldOut(hub.id)} className={`flex-1 py-5 border font-black rounded-2xl uppercase text-[11px] tracking-widest transition-all ${hub.isSoldOut ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20' : 'bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981] hover:bg-[#10b981]/20'}`}>

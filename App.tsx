@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([
     { id: 'global', name: 'Global Arena Chat', description: 'Main communication hub for all players.', isGlobal: true, messages: [] }
@@ -74,7 +75,6 @@ const App: React.FC = () => {
 
       setIsLoading(true);
       try {
-        // Fetch Hubs
         const { data: hubsData, error: hubsError } = await supabase.from('hubs').select('*');
         if (hubsError) throw hubsError;
         
@@ -93,7 +93,6 @@ const App: React.FC = () => {
           })));
         }
 
-        // Fetch Bookings
         const { data: bookingsData, error: bookingsError } = await supabase.from('bookings').select('*');
         if (bookingsError) throw bookingsError;
         if (bookingsData) {
@@ -120,9 +119,11 @@ const App: React.FC = () => {
   }, [view, refreshTrigger, sessionUser]);
 
   const handleSaveHub = async (hubData: Hub) => {
-    if (!sessionUser) return;
+    if (!sessionUser) {
+      alert("Authentication Error: You must be logged in to deploy a venue.");
+      return;
+    }
     
-    // Standardized payload matching Supabase snake_case conventions
     const payload: any = {
       name: hubData.name,
       type: hubData.type,
@@ -147,22 +148,60 @@ const App: React.FC = () => {
         result = await supabase.from('hubs').insert([payload]).select();
       }
       
-      if (result.error) {
-        // Handle Missing Column Error (PGRST204)
-        if (result.error.code === 'PGRST204') {
-          const sqlFix = `ALTER TABLE hubs ADD COLUMN IF NOT EXISTS upi_id TEXT; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS contact_phone TEXT; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS contact_email TEXT; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS slots JSONB DEFAULT '[]'; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS accessories JSONB; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS is_sold_out BOOLEAN DEFAULT false;`;
-          
-          alert(`DATABASE SCHEMA ERROR: The column '${result.error.message.split("'")[1]}' is missing.\n\nFIX: Go to your Supabase SQL Editor and run this:\n\n${sqlFix}`);
-          throw result.error;
-        }
-        throw result.error;
-      }
-      
+      if (result.error) throw result.error;
       setRefreshTrigger(p => p + 1);
       setView('owner');
     } catch (err: any) {
       console.error("Deployment Failure:", err);
-      // alert remains as backup if code above doesn't catch it
+      alert(`DEPLOYMENT FAILED: ${err.message}`);
+    }
+  };
+
+  const handleDeleteHub = async (id: string) => {
+    console.log("--- STARTING DELETION SEQUENCE ---");
+    console.log("Target ID:", id);
+    console.log("Current User Session:", sessionUser?.id);
+    
+    setIsDeleting(true);
+    
+    try {
+      // Step 1: Force a delete operation
+      // Note: We use .select() to ensure we get confirmation of what was actually deleted
+      const { data, error } = await supabase
+        .from('hubs')
+        .delete()
+        .eq('id', id)
+        .select();
+      
+      if (error) {
+        console.error("Supabase Error Response:", error);
+        setError(`DB Error: ${error.message}`);
+        setIsDeleting(false);
+        return;
+      }
+
+      console.log("Supabase Success Response Data:", data);
+
+      if (!data || data.length === 0) {
+        console.warn("DELETION FAILED: 0 rows affected. Check RLS policies.");
+        const rlsPrompt = `
+-- COPY THIS INTO SUPABASE SQL EDITOR --
+DROP POLICY IF EXISTS "owner_full_control" ON hubs;
+CREATE POLICY "owner_full_control" ON hubs FOR ALL USING (auth.uid()::text = owner_id::text);
+ALTER TABLE hubs ENABLE ROW LEVEL SECURITY;
+        `.trim();
+        setError(`Security Lock: 0 venues were removed. Your RLS policy likely blocks "Delete" for your user ID.\n\nFix script available in console.`);
+        console.log(rlsPrompt);
+      } else {
+        console.log("DELETION CONFIRMED. Refreshing state...");
+        setRefreshTrigger(p => p + 1);
+        setError(null);
+      }
+    } catch (err: any) {
+      console.error("Critical Exception in Delete:", err);
+      setError(`Critical Error: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -175,6 +214,23 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 font-sans">
+      {error && (
+        <div className="fixed bottom-10 right-10 z-[1000] bg-red-600 text-white p-6 rounded-2xl shadow-2xl max-w-md animate-in slide-in-from-right-10">
+          <h4 className="font-black uppercase text-xs mb-2">Operation Error</h4>
+          <p className="text-xs font-bold leading-relaxed">{error}</p>
+          <button onClick={() => setError(null)} className="mt-4 bg-white/20 hover:bg-white/40 px-4 py-2 rounded-xl text-[10px] font-black uppercase">Dismiss</button>
+        </div>
+      )}
+
+      {isDeleting && (
+        <div className="fixed inset-0 z-[2000] bg-[#020617]/80 backdrop-blur-md flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <p className="text-sm font-black text-white uppercase tracking-[0.3em]">Decommissioning Venue...</p>
+          </div>
+        </div>
+      )}
+
       {view === 'landing' && <LandingView onStartAuth={(role) => { setAuthType(role); setView('auth'); }} onBrowseGuest={() => { setAuthType('guest'); setView('user'); }} />}
       {view === 'auth' && <AuthView type={authType} onBack={() => setView('landing')} onSuccess={(nk) => { if(nk) setUserNickname(nk); }} />}
       {view === 'user' && (
@@ -183,7 +239,7 @@ const App: React.FC = () => {
       {view === 'hub-detail' && selectedHub && (
         <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={() => {}} onPostReview={() => {}} allBookings={bookings} />
       )}
-      {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={async (id, status) => { await supabase.from('bookings').update({ status }).eq('id', id); setRefreshTrigger(p => p + 1); }} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={async (id) => { if(confirm('Are you sure?')) { await supabase.from('hubs').delete().eq('id', id); setRefreshTrigger(p => p + 1); } }} onToggleSoldOut={async (id) => { const h = hubs.find(h => h.id === id); if(h) await supabase.from('hubs').update({ is_sold_out: !h.isSoldOut }).eq('id', id); setRefreshTrigger(p => p + 1); }} onNavigateHome={() => setView('owner')} />}
+      {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={async (id, status) => { await supabase.from('bookings').update({ status }).eq('id', id); setRefreshTrigger(p => p + 1); }} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={handleDeleteHub} onToggleSoldOut={async (id) => { const h = hubs.find(h => h.id === id); if(h) await supabase.from('hubs').update({ is_sold_out: !h.isSoldOut }).eq('id', id); setRefreshTrigger(p => p + 1); }} onNavigateHome={() => setView('owner')} />}
       {view === 'hub-register' && <HubRegisterView onBack={() => setView('owner')} onLogout={handleLogout} onNavigateHome={() => setView('owner')} hubToEdit={editingHub || undefined} onSave={handleSaveHub} />}
     </div>
   );
