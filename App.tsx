@@ -85,11 +85,11 @@ const App: React.FC = () => {
             owner_id: h.owner_id,
             priceStart: Number(h.price_start) || 0,
             isSoldOut: !!h.is_sold_out,
-            contactPhone: h.contact_phone,
-            contactEmail: h.contact_email,
-            upiId: h.upi_id,
-            slots: h.slots || [],
-            accessories: h.accessories || undefined
+            contactPhone: h.contact_phone || '',
+            contactEmail: h.contact_email || '',
+            upiId: h.upi_id || '',
+            slots: Array.isArray(h.slots) ? h.slots : [],
+            accessories: Array.isArray(h.accessories) ? h.accessories : undefined
           })));
         }
 
@@ -122,19 +122,19 @@ const App: React.FC = () => {
   const handleSaveHub = async (hubData: Hub) => {
     if (!sessionUser) return;
     
-    // Prepare standardized payload
+    // Standardized payload matching Supabase snake_case conventions
     const payload: any = {
       name: hubData.name,
       type: hubData.type,
       location: hubData.location,
       price_start: Number(hubData.priceStart),
-      description: hubData.description,
+      description: hubData.description || "",
       images: hubData.images,
-      contact_phone: hubData.contactPhone,
-      contact_email: hubData.contactEmail,
-      upi_id: hubData.upiId,
-      is_sold_out: hubData.isSoldOut || false,
-      slots: hubData.slots,
+      contact_phone: hubData.contactPhone || "",
+      contact_email: hubData.contactEmail || "",
+      upi_id: hubData.upiId || "",
+      is_sold_out: !!hubData.isSoldOut,
+      slots: hubData.slots || [],
       accessories: hubData.accessories || null,
       owner_id: sessionUser.id
     };
@@ -148,19 +148,21 @@ const App: React.FC = () => {
       }
       
       if (result.error) {
-        // Specific help for schema errors
+        // Handle Missing Column Error (PGRST204)
         if (result.error.code === 'PGRST204') {
-          throw new Error(`Missing Column: Your database table 'hubs' is missing the '${result.error.message.split("'")[1]}' column. Please add it in your Supabase SQL editor.`);
+          const sqlFix = `ALTER TABLE hubs ADD COLUMN IF NOT EXISTS upi_id TEXT; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS contact_phone TEXT; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS contact_email TEXT; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS slots JSONB DEFAULT '[]'; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS accessories JSONB; ALTER TABLE hubs ADD COLUMN IF NOT EXISTS is_sold_out BOOLEAN DEFAULT false;`;
+          
+          alert(`DATABASE SCHEMA ERROR: The column '${result.error.message.split("'")[1]}' is missing.\n\nFIX: Go to your Supabase SQL Editor and run this:\n\n${sqlFix}`);
+          throw result.error;
         }
         throw result.error;
       }
       
-      // Force refresh and return to dashboard
       setRefreshTrigger(p => p + 1);
       setView('owner');
     } catch (err: any) {
-      console.error("Save failed:", err);
-      alert("Deployment Failed: " + err.message);
+      console.error("Deployment Failure:", err);
+      // alert remains as backup if code above doesn't catch it
     }
   };
 
@@ -181,7 +183,7 @@ const App: React.FC = () => {
       {view === 'hub-detail' && selectedHub && (
         <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={() => {}} onPostReview={() => {}} allBookings={bookings} />
       )}
-      {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={async (id, status) => { await supabase.from('bookings').update({ status }).eq('id', id); setRefreshTrigger(p => p + 1); }} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={async (id) => { await supabase.from('hubs').delete().eq('id', id); setRefreshTrigger(p => p + 1); }} onToggleSoldOut={async (id) => { const h = hubs.find(h => h.id === id); if(h) await supabase.from('hubs').update({ is_sold_out: !h.isSoldOut }).eq('id', id); setRefreshTrigger(p => p + 1); }} onNavigateHome={() => setView('owner')} />}
+      {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={async (id, status) => { await supabase.from('bookings').update({ status }).eq('id', id); setRefreshTrigger(p => p + 1); }} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={async (id) => { if(confirm('Are you sure?')) { await supabase.from('hubs').delete().eq('id', id); setRefreshTrigger(p => p + 1); } }} onToggleSoldOut={async (id) => { const h = hubs.find(h => h.id === id); if(h) await supabase.from('hubs').update({ is_sold_out: !h.isSoldOut }).eq('id', id); setRefreshTrigger(p => p + 1); }} onNavigateHome={() => setView('owner')} />}
       {view === 'hub-register' && <HubRegisterView onBack={() => setView('owner')} onLogout={handleLogout} onNavigateHome={() => setView('owner')} hubToEdit={editingHub || undefined} onSave={handleSaveHub} />}
     </div>
   );
