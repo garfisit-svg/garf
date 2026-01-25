@@ -2,31 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { Booking, Hub } from '../types';
 
-const ArrivalTimer: React.FC<{ createdAt: number }> = ({ createdAt }) => {
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-
-  useEffect(() => {
-    const calculate = () => {
-      const fifteenMins = 15 * 60 * 1000;
-      const elapsed = Date.now() - createdAt;
-      const remaining = Math.max(0, fifteenMins - elapsed);
-      setTimeLeft(remaining);
-    };
-    calculate();
-    const interval = setInterval(calculate, 1000);
-    return () => clearInterval(interval);
-  }, [createdAt]);
-
-  const mins = Math.floor(timeLeft / 60000);
-  const secs = Math.floor((timeLeft % 60000) / 1000);
-
-  return (
-    <div className={`text-xl font-black ${timeLeft < 5 * 60 * 1000 ? 'text-red-500 animate-pulse' : 'text-emerald-400'}`}>
-      {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
-    </div>
-  );
-};
-
 const PerformanceGraph: React.FC<{ hasData: boolean }> = ({ hasData }) => {
   const pathData = hasData 
     ? "M0,250 Q100,200 200,220 T400,100 T600,150 T800,50 L800,300 L0,300 Z"
@@ -65,6 +40,7 @@ const PerformanceGraph: React.FC<{ hasData: boolean }> = ({ hasData }) => {
 interface OwnerDashboardProps {
   hubs: Hub[];
   bookings: Booking[];
+  sessionUser: any;
   onUpdateBookingStatus: (id: string, status: 'confirmed' | 'expired') => void;
   onLogout: () => void;
   onAddHub: () => void;
@@ -74,16 +50,13 @@ interface OwnerDashboardProps {
   onNavigateHome: () => void;
 }
 
-const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, onUpdateBookingStatus, onLogout, onAddHub, onEditHub, onDeleteHub, onToggleSoldOut, onNavigateHome }) => {
+const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, sessionUser, onUpdateBookingStatus, onLogout, onAddHub, onEditHub, onDeleteHub, onToggleSoldOut, onNavigateHome }) => {
   const [activeTab, setActiveTab] = useState<'hubs' | 'bookings' | 'stats'>('hubs');
 
-  const getPaymentTheme = (method: string) => {
-    switch(method) {
-      case 'upi': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-      case 'cash': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      default: return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-    }
-  };
+  // Strict ownership check. We use sessionUser.id to filter the global hubs list.
+  const myHubs = hubs.filter(h => String(h.owner_id) === String(sessionUser?.id));
+  const myHubIds = myHubs.map(h => h.id);
+  const myBookings = bookings.filter(b => myHubIds.includes(b.hubId));
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
@@ -105,7 +78,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, onUpdat
               { id: 'bookings', label: 'Bookings' },
               { id: 'stats', label: 'Stats' }
             ].map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-8 py-3.5 rounded-[15px] font-black text-[11px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[#10b981] text-[#020617]' : 'text-slate-500 hover:text-slate-300'}`}>
+              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-8 py-3.5 rounded-[15px] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#10b981] text-[#020617]' : 'text-slate-500 hover:text-slate-300'}`}>
                 {tab.label}
               </button>
             ))}
@@ -114,18 +87,20 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, onUpdat
 
         {activeTab === 'bookings' && (
           <div className="grid gap-6">
-            {bookings.length === 0 ? (
+            {myBookings.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 bg-[#0b1120] border border-dashed border-slate-800 rounded-[60px] text-center">
-                <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 border border-slate-800"><svg className="w-8 h-8 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
+                <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 border border-slate-800 text-slate-700">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+                </div>
                 <h3 className="text-2xl font-black text-slate-400 uppercase tracking-tighter">No Bookings Yet</h3>
                 <p className="text-slate-600 font-bold text-xs uppercase tracking-widest mt-2">Waiting for new customers...</p>
               </div>
             ) : (
-              bookings.map(b => (
+              myBookings.map(b => (
                 <div key={b.id} className="bg-[#0b1120] border border-slate-800 rounded-[32px] p-8 flex flex-col md:flex-row items-center justify-between gap-8 transition-all hover:border-slate-600">
                   <div className="flex items-center gap-6">
-                    <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center font-black text-xl ${getPaymentTheme(b.paymentMethod)}`}>
-                      {b.paymentMethod === 'upi' ? 'U' : b.paymentMethod === 'cash' ? 'C' : 'O'}
+                    <div className="w-16 h-16 rounded-2xl border bg-purple-500/10 text-purple-500 border-purple-500/20 flex items-center justify-center font-black text-xl">
+                      U
                     </div>
                     <div>
                       <h4 className="text-2xl font-black">{b.userName}</h4>
@@ -137,16 +112,14 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, onUpdat
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Time</p>
                        <p className="text-xl font-black">{b.slotTime}</p>
                     </div>
-                    {b.status === 'pending' && b.paymentMethod === 'cash' && (
-                      <div className="text-center px-8 border-x border-slate-800">
-                         <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Arrival Timer</p>
-                         <ArrivalTimer createdAt={b.createdAt} />
-                      </div>
-                    )}
+                    <div className="text-center px-8 border-x border-slate-800">
+                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Paid</p>
+                       <p className="text-xl font-black text-emerald-400">₹{b.totalPrice}</p>
+                    </div>
                     <div className="flex items-center gap-3">
                       {b.status === 'pending' ? (
                         <>
-                          <button onClick={() => onUpdateBookingStatus(b.id, 'confirmed')} className="bg-[#10b981] hover:bg-emerald-400 text-[#020617] px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Confirm</button>
+                          <button onClick={() => onUpdateBookingStatus(b.id, 'confirmed')} className="bg-[#10b981] hover:bg-emerald-400 text-[#020617] px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Verify & Confirm</button>
                           <button onClick={() => onUpdateBookingStatus(b.id, 'expired')} className="bg-red-900/20 hover:bg-red-900/40 text-red-500 px-6 py-3 rounded-xl font-black text-xs uppercase transition-all">Cancel</button>
                         </>
                       ) : (
@@ -172,47 +145,64 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ hubs, bookings, onUpdat
                   <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Revenue Stats</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-4xl font-black text-white">₹{bookings.filter(b => b.status === 'confirmed').reduce((acc, curr) => acc + (parseInt(curr.slotTime.split('₹')[1]) || 0), 0)}</p>
+                  <p className="text-4xl font-black text-white">₹{myBookings.filter(b => b.status === 'confirmed').reduce((acc, curr) => acc + (curr.totalPrice || 0), 0)}</p>
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Revenue</p>
                 </div>
               </div>
-              <PerformanceGraph hasData={bookings.length > 0} />
+              <PerformanceGraph hasData={myBookings.length > 0} />
             </div>
           </div>
         )}
 
         {activeTab === 'hubs' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {hubs.length === 0 ? (
+            {myHubs.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-40 bg-[#0b1120] border border-dashed border-slate-800 rounded-[60px] text-center">
-                <div className="w-24 h-24 bg-[#020617] rounded-full flex items-center justify-center mb-8 border border-slate-800 transition-all"><svg className="w-10 h-10 text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>
+                <div className="w-24 h-24 bg-[#020617] rounded-full flex items-center justify-center mb-8 border border-slate-800 transition-all text-slate-800">
+                  <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
                 <h3 className="text-3xl font-black text-slate-500 uppercase tracking-tighter">No Venues</h3>
                 <p className="text-slate-600 font-bold text-sm uppercase tracking-widest mt-3 mb-8">Register your first venue to get started</p>
                 <button onClick={onAddHub} className="px-8 py-4 bg-[#10b981] text-[#020617] font-black rounded-2xl uppercase text-xs tracking-widest hover:scale-105 transition-all">+ Add Venue</button>
               </div>
             ) : (
-              hubs.map(hub => (
-                <div key={hub.id} className="bg-[#0b1120] border border-slate-800 rounded-[40px] overflow-hidden group transition-all hover:border-slate-600">
-                  <div className="relative h-64 w-full">
-                    <img src={hub.images[0]} className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${hub.isSoldOut ? 'grayscale contrast-125' : ''}`} alt="" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] to-transparent opacity-80"></div>
-                    {hub.isSoldOut && <div className="absolute top-8 right-8 bg-red-600 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest animate-pulse">Sold Out</div>}
-                    <div className="absolute bottom-8 left-8">
-                      <h4 className="text-4xl font-black text-white tracking-tighter mb-1 uppercase">{hub.name}</h4>
-                      <p className="text-slate-400 font-black text-sm tracking-widest uppercase">{hub.location}</p>
+              myHubs.map(hub => {
+                const count = bookings.filter(b => b.hubId === hub.id && b.status === 'confirmed').length;
+                return (
+                  <div key={hub.id} className="bg-[#0b1120] border border-slate-800 rounded-[40px] overflow-hidden group transition-all hover:border-slate-600">
+                    <div className="relative h-64 w-full">
+                      <img src={hub.images[0]} className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${hub.isSoldOut ? 'grayscale contrast-125' : ''}`} alt="" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] to-transparent opacity-80"></div>
+                      
+                      <div className="absolute top-8 left-8 bg-[#020617]/90 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-700/50 flex flex-col items-start gap-1">
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Garf Free Period</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-lg font-black text-white">{count}</span>
+                          <span className="text-[10px] font-bold text-slate-600">/ 50</span>
+                        </div>
+                        <div className="w-24 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                          <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${Math.min(100, (count / 50) * 100)}%` }}></div>
+                        </div>
+                      </div>
+
+                      {hub.isSoldOut && <div className="absolute top-8 right-8 bg-red-600 text-white font-black px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest animate-pulse">Sold Out</div>}
+                      <div className="absolute bottom-8 left-8">
+                        <h4 className="text-4xl font-black text-white tracking-tighter mb-1 uppercase">{hub.name}</h4>
+                        <p className="text-slate-400 font-black text-sm tracking-widest uppercase">{hub.location}</p>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); onDeleteHub(hub.id); }} className="absolute top-8 right-8 w-12 h-12 bg-red-600/20 backdrop-blur-md border border-red-500/30 rounded-2xl flex items-center justify-center text-red-500 hover:bg-red-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete this venue?')) onDeleteHub(hub.id); }} className="absolute top-8 right-8 w-12 h-12 bg-red-600/20 backdrop-blur-md border border-red-500/30 rounded-2xl flex items-center justify-center text-red-500 hover:bg-red-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
+                    <div className="p-8 flex gap-4">
+                      <button onClick={() => onToggleSoldOut(hub.id)} className={`flex-1 py-5 border font-black rounded-2xl uppercase text-[11px] tracking-widest transition-all ${hub.isSoldOut ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20' : 'bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981] hover:bg-[#10b981]/20'}`}>
+                        {hub.isSoldOut ? 'Set Active' : 'Set Sold Out'}
+                      </button>
+                      <button onClick={() => onEditHub(hub)} className="flex-1 py-5 bg-slate-900 border border-slate-800 text-white font-black rounded-2xl uppercase text-[11px] tracking-widest hover:bg-slate-800 transition-all">Edit Venue</button>
+                    </div>
                   </div>
-                  <div className="p-8 flex gap-4">
-                    <button onClick={() => onToggleSoldOut(hub.id)} className={`flex-1 py-5 border font-black rounded-2xl uppercase text-[11px] tracking-widest transition-all ${hub.isSoldOut ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20' : 'bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981] hover:bg-[#10b981]/20'}`}>
-                      {hub.isSoldOut ? 'Set Active' : 'Set Sold Out'}
-                    </button>
-                    <button onClick={() => onEditHub(hub)} className="flex-1 py-5 bg-slate-900 border border-slate-800 text-white font-black rounded-2xl uppercase text-[11px] tracking-widest hover:bg-slate-800 transition-all">Edit Details</button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}

@@ -10,17 +10,24 @@ interface HubDetailViewProps {
   onLogout: () => void;
   onBook: (bookingData: any) => void;
   onPostReview: (hubId: string, review: Omit<Review, 'id' | 'date'>) => void;
+  allBookings?: Booking[]; // Added to calculate fee threshold
 }
 
-const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout, onBook }) => {
+const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogout, onBook, allBookings = [] }) => {
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(hub.type === 'GAMING CAFE' && hub.accessories ? hub.accessories[0] : null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // --- SERVICE FEE LOGIC ---
+  // Every cafe gets first 50 bookings with 0 GARF fee. After 50, ₹10 fee.
+  const hubBookingCount = allBookings.filter(b => b.hubId === hub.id && b.status === 'confirmed').length;
+  const serviceFee = hubBookingCount >= 50 ? 10 : 0;
+  const totalPrice = selectedSlot ? selectedSlot.price + serviceFee : 0;
+
   // --- DIRECT UPI LOGIC ---
   const bookingRef = selectedAccessory ? `${hub.name}-${selectedAccessory.name}` : hub.name;
-  const upiLink = selectedSlot ? `upi://pay?pa=${hub.upiId}&pn=${encodeURIComponent(hub.name)}&am=${selectedSlot.price}&cu=INR&tn=${encodeURIComponent('Garf Booking: ' + bookingRef)}` : '';
+  const upiLink = selectedSlot ? `upi://pay?pa=${hub.upiId}&pn=${encodeURIComponent(hub.name)}&am=${totalPrice}&cu=INR&tn=${encodeURIComponent('Garf Booking: ' + bookingRef)}` : '';
   const qrCodeUrl = selectedSlot ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiLink)}` : '';
 
   const handleConfirmPayment = () => {
@@ -32,7 +39,10 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
         accessoryName: selectedAccessory?.name,
         slotTime: selectedSlot?.time,
         paymentMethod: 'upi',
-        status: 'confirmed'
+        status: 'confirmed',
+        basePrice: selectedSlot?.price,
+        serviceFee: serviceFee,
+        totalPrice: totalPrice
       });
       setIsProcessing(false);
       setShowPaymentModal(false);
@@ -68,7 +78,6 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
             </div>
 
             <div className="space-y-12">
-              {/* ACCESSORY PICKER FOR GAMING CAFES */}
               {hub.type === 'GAMING CAFE' && hub.accessories && (
                 <div className="bg-[#0b1120] border border-slate-800 rounded-[50px] p-10 shadow-xl">
                   <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-8">1. Select Item</h3>
@@ -91,7 +100,6 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
                 </div>
               )}
 
-              {/* SLOT PICKER */}
               <div className="bg-[#0b1120] border border-slate-800 rounded-[50px] p-10 shadow-xl">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-8">
                   {hub.type === 'GAMING CAFE' ? '2. Select Time Slot' : 'Available Time Slots'}
@@ -125,35 +133,36 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
               {selectedSlot ? (
                 <div className="space-y-8 animate-in fade-in duration-500">
                   <div className="space-y-4">
-                    {selectedAccessory && (
-                      <div className="flex justify-between items-center border-b border-slate-800/50 pb-4">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Accessory</span>
-                        <span className="text-sm font-black text-white uppercase">{selectedAccessory.name}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between items-center border-b border-slate-800/50 pb-4">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Time</span>
-                      <span className="text-sm font-black text-white uppercase">{selectedSlot.time}</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Venue Price</span>
+                      <span className="text-sm font-black text-white uppercase">₹{selectedSlot.price}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-slate-800/50 pb-4">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Garf Service Fee</span>
+                        {serviceFee === 0 && <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">First 50 Bookings Free!</span>}
+                      </div>
+                      <span className="text-sm font-black text-white uppercase">₹{serviceFee}</span>
                     </div>
                     <div className="flex justify-between items-center pt-2">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Amount</span>
-                      <span className="text-4xl font-black text-emerald-400 tracking-tighter">₹{selectedSlot.price}</span>
+                      <span className="text-4xl font-black text-emerald-400 tracking-tighter">₹{totalPrice}</span>
                     </div>
                   </div>
 
                   <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-[32px]">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Verified Payment</p>
+                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Direct-to-Owner Payment</p>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Direct transfer to owner: <span className="text-white font-bold">{hub.upiId}</span></p>
+                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Payment goes directly to: <span className="text-white font-bold">{hub.upiId}</span></p>
                   </div>
 
                   <button 
                     onClick={() => setShowPaymentModal(true)} 
                     className="w-full py-6 bg-emerald-500 text-[#020617] font-black rounded-[28px] uppercase tracking-widest text-sm hover:scale-[1.03] transition-all shadow-[0_12px_48px_rgba(16,185,129,0.3)]"
                   >
-                    Proceed to Payment
+                    Pay & Book Now
                   </button>
                 </div>
               ) : (
@@ -169,13 +178,12 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
         </div>
       </main>
 
-      {/* --- PAYMENT MODAL --- */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-[100] bg-[#020617]/98 backdrop-blur-2xl flex items-center justify-center p-6">
           <div className="bg-[#0b1120] border border-slate-800 rounded-[70px] p-14 w-full max-w-xl shadow-2xl text-center space-y-10 animate-in zoom-in duration-300 border-t-emerald-500/50">
             <header>
               <h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none mb-3">Direct Transfer</h2>
-              <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Pay to {hub.name}</p>
+              <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Scan to Pay {hub.name}</p>
             </header>
 
             <div className="relative group mx-auto inline-block">
@@ -187,20 +195,20 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
 
             <div className="space-y-6">
               <div>
-                <p className="text-5xl font-black text-white tracking-tighter">₹{selectedSlot?.price}</p>
-                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Total Amount</p>
+                <p className="text-5xl font-black text-white tracking-tighter">₹{totalPrice}</p>
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Payable Amount</p>
               </div>
               
               <div className="flex flex-col gap-3">
-                <a href={upiLink} className="md:hidden w-full py-5 bg-white text-[#020617] font-black rounded-3xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">Open UPI App</a>
+                <a href={upiLink} className="md:hidden w-full py-5 bg-white text-[#020617] font-black rounded-3xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">Pay via UPI App</a>
                 <button 
                   onClick={handleConfirmPayment} 
                   disabled={isProcessing} 
                   className="w-full py-5 bg-emerald-500 text-[#020617] font-black rounded-3xl uppercase tracking-widest text-xs disabled:opacity-50 transition-all hover:scale-[1.02]"
                 >
-                  {isProcessing ? 'Verifying...' : 'I Have Sent Payment'}
+                  {isProcessing ? 'Confirming...' : 'I Have Transferred Funds'}
                 </button>
-                <button onClick={() => setShowPaymentModal(false)} className="text-[11px] font-black text-slate-600 uppercase tracking-widest hover:text-red-500 transition-colors">Cancel</button>
+                <button onClick={() => setShowPaymentModal(false)} className="text-[11px] font-black text-slate-600 uppercase tracking-widest hover:text-red-500 transition-colors">Go Back</button>
               </div>
             </div>
 

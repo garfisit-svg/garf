@@ -23,6 +23,7 @@ export interface Review {
 
 export interface Hub {
   id: string;
+  owner_id?: string; // Explicit owner tracking
   name: string;
   type: 'TURF' | 'GAMING CAFE';
   location: string;
@@ -39,8 +40,9 @@ export interface Hub {
   isSoldOut?: boolean;
   contactPhone?: string;
   contactEmail?: string;
-  upiId?: string; // New: Owner's direct UPI ID for payments
+  upiId?: string; 
   reviews?: Review[];
+  bookingCount?: number; // Tracking for service fee threshold
 }
 
 export interface Booking {
@@ -54,10 +56,13 @@ export interface Booking {
   date: string;
   createdAt: number; // timestamp
   status: 'confirmed' | 'pending' | 'expired';
-  paymentMethod: 'online' | 'cash' | 'upi';
+  paymentMethod: 'online' | 'upi'; 
   transactionId?: string;
   accessoryName?: string;
   playerCount?: number;
+  basePrice?: number;
+  serviceFee?: number;
+  totalPrice?: number;
 }
 
 export interface PollOption {
