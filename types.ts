@@ -7,6 +7,15 @@ export interface TimeSlot {
   available: boolean;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  totalUnits: number;
+  pricePerHour: number;
+  image?: string;
+  slots: TimeSlot[];
+}
+
 export interface Accessory {
   id: string;
   name: string;
@@ -23,7 +32,7 @@ export interface Review {
 
 export interface Hub {
   id: string;
-  owner_id?: string; // Explicit owner tracking
+  owner_id?: string;
   name: string;
   type: 'TURF' | 'GAMING CAFE';
   location: string;
@@ -31,19 +40,20 @@ export interface Hub {
   lng?: number;
   rating: number;
   images: string[];
-  foodMenu?: string[]; // Added food menu images
+  foodMenu?: string[];
   priceStart: number;
   description: string;
   amenities: string[];
   slots: TimeSlot[]; // For Turfs
-  accessories?: Accessory[]; // For Gaming Cafes
+  categories?: Category[]; // For Gaming Cafes
+  accessories?: Accessory[]; // Legacy support
   isBestSeller?: boolean;
   isSoldOut?: boolean;
   contactPhone?: string;
   contactEmail?: string;
   upiId?: string; 
   reviews?: Review[];
-  bookingCount?: number; // Tracking for service fee threshold
+  bookingCount?: number;
 }
 
 export interface Booking {
@@ -55,11 +65,13 @@ export interface Booking {
   userId: string;
   userName: string;
   date: string;
-  createdAt: number; // timestamp
+  createdAt: number;
   status: 'confirmed' | 'pending' | 'expired';
   paymentMethod: 'online' | 'upi'; 
   transactionId?: string;
   accessoryName?: string;
+  categoryName?: string;
+  categoryId?: string;
   playerCount?: number;
   basePrice?: number;
   serviceFee?: number;

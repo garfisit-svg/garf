@@ -32,7 +32,6 @@ const App: React.FC = () => {
     viewRef.current = view;
   }, [view]);
 
-  // Handle Session Persistence
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -65,7 +64,6 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Centralized Data Fetcher
   useEffect(() => {
     const fetchData = async () => {
       if (isDemoMode() || view === 'landing' || view === 'auth') {
@@ -90,6 +88,7 @@ const App: React.FC = () => {
             upiId: h.upi_id || '',
             foodMenu: Array.isArray(h.food_menu) ? h.food_menu : [],
             slots: Array.isArray(h.slots) ? h.slots : [],
+            categories: Array.isArray(h.categories) ? h.categories : [],
             accessories: Array.isArray(h.accessories) ? h.accessories : undefined
           })));
         }
@@ -106,7 +105,9 @@ const App: React.FC = () => {
               hubName: b.hub_name,
               totalPrice: Number(b.total_price) || 0,
               status: b.status,
-              playerCount: b.player_count || 1
+              playerCount: Number(b.player_count) || 1,
+              categoryId: b.category_id,
+              categoryName: b.category_name
            })));
         }
       } catch (err: any) {
@@ -135,10 +136,11 @@ const App: React.FC = () => {
       base_price: bookingData.basePrice,
       service_fee: bookingData.serviceFee,
       total_price: bookingData.totalPrice,
-      player_count: bookingData.playerCount || 1,
+      player_count: Number(bookingData.playerCount) || 1,
       payment_method: 'upi',
       status: 'pending',
-      accessory_name: bookingData.accessoryName,
+      category_id: bookingData.categoryId,
+      category_name: bookingData.categoryName,
       date: new Date().toLocaleDateString()
     };
 
@@ -151,7 +153,7 @@ const App: React.FC = () => {
       alert("RESERVATION SECURED: Check your history for verification status.");
     } catch (err: any) {
       console.error("Booking failed:", err);
-      alert(`BOOKING FAILED: ${err.message}`);
+      alert(`BOOKING FAILED: ${err.message}. Please ensure your bookings table has category_id and category_name columns.`);
     }
   };
 
@@ -170,7 +172,7 @@ const App: React.FC = () => {
       upi_id: hubData.upiId || "",
       is_sold_out: !!hubData.isSoldOut,
       slots: hubData.slots || [],
-      accessories: hubData.accessories || null,
+      categories: hubData.categories || [],
       owner_id: sessionUser.id
     };
     try {
@@ -185,7 +187,7 @@ const App: React.FC = () => {
       setView('owner');
     } catch (err: any) {
       console.error("Deployment Failure:", err);
-      alert(`DEPLOYMENT FAILED: ${err.message}`);
+      setError(`Deployment failed: ${err.message}. Ensure the "categories" and "food_menu" columns exist in your "hubs" table.`);
     }
   };
 
@@ -194,7 +196,6 @@ const App: React.FC = () => {
     try {
       const { data, error } = await supabase.from('hubs').delete().eq('id', id).select();
       if (error) throw error;
-      if (!data || data.length === 0) throw new Error("Deletion rejected by RLS.");
       setRefreshTrigger(p => p + 1);
       setError(null);
     } catch (err: any) {
