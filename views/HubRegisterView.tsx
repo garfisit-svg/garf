@@ -28,6 +28,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
   const [address, setAddress] = useState('');
   const [upiId, setUpiId] = useState('');
   const [images, setImages] = useState<string[]>(['']);
+  const [foodMenu, setFoodMenu] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -53,6 +54,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       setAddress(hubToEdit.location);
       setUpiId(hubToEdit.upiId || '');
       setImages(hubToEdit.images.length > 0 ? hubToEdit.images : ['']);
+      setFoodMenu(hubToEdit.foodMenu || []);
       setDescription(hubToEdit.description);
       setContactPhone(hubToEdit.contactPhone || '');
       setContactEmail(hubToEdit.contactEmail || '');
@@ -84,6 +86,14 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
     setImages(next);
   };
   const handleRemoveImage = (idx: number) => setImages(images.filter((_, i) => i !== idx));
+
+  const handleAddMenuImage = () => setFoodMenu([...foodMenu, '']);
+  const handleUpdateMenuImage = (idx: number, val: string) => {
+    const next = [...foodMenu];
+    next[idx] = val;
+    setFoodMenu(next);
+  };
+  const handleRemoveMenuImage = (idx: number) => setFoodMenu(foodMenu.filter((_, i) => i !== idx));
 
   const handleAddTurfSlot = () => setTurfSlots([...turfSlots, { id: 'ts'+Date.now(), time: '09:00 - 10:00', price: '1000' }]);
   const handleRemoveTurfSlot = (id: string) => setTurfSlots(turfSlots.filter(s => s.id !== id));
@@ -148,6 +158,8 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       validImages.push('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200');
     }
 
+    const validMenu = foodMenu.filter(url => url.trim() !== '');
+
     const finalSlots: TimeSlot[] = turfSlots.map(ts => ({
       id: ts.id,
       time: ts.time,
@@ -174,6 +186,7 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
       upiId: upiId,
       rating: hubToEdit?.rating || 5.0,
       images: validImages,
+      foodMenu: validMenu,
       priceStart: hubType === 'TURF' ? (finalSlots[0]?.price || 0) : Math.min(...finalAccessories.map(a => a.slots[0]?.price || 9999)),
       description: description || `Elite ${hubType.toLowerCase()} hub experience.`,
       amenities: hubToEdit?.amenities || ['Parking', 'Water', 'Locker'],
@@ -248,6 +261,26 @@ const HubRegisterView: React.FC<HubRegisterViewProps> = ({ onBack, onLogout, onN
                       )}
                     </div>
                   ))}
+                </div>
+              </section>
+
+              <section className="space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                  <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Food Menu / Refuel Station Photos</h3>
+                  <button onClick={handleAddMenuImage} className="text-emerald-500 text-[10px] font-black uppercase hover:text-emerald-400">+ Add Link</button>
+                </div>
+                <div className="space-y-4">
+                  {foodMenu.map((img, idx) => (
+                    <div key={idx} className="flex gap-4">
+                      <input type="text" placeholder="https://menu-photo-url.jpg" value={img} onChange={(e) => handleUpdateMenuImage(idx, e.target.value)} className="flex-1 bg-[#020617] border border-slate-800 rounded-2xl py-4 px-6 text-[12px] font-medium text-slate-300 outline-none focus:border-emerald-500" />
+                      <button onClick={() => handleRemoveMenuImage(idx)} className="w-14 h-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {foodMenu.length === 0 && (
+                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">No menu images added yet.</p>
+                  )}
                 </div>
               </section>
             </div>

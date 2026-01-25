@@ -19,6 +19,7 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
   const [playerCount, setPlayerCount] = useState<number>(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activeMenuPhoto, setActiveMenuPhoto] = useState<string | null>(null);
 
   // --- SERVICE FEE & SPLIT LOGIC ---
   const hubBookingCount = allBookings.filter(b => b.hubId === hub.id && b.status === 'confirmed').length;
@@ -81,6 +82,27 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
             </div>
 
             <div className="space-y-6 md:space-y-12">
+              {/* FOOD MENU SECTION */}
+              {hub.foodMenu && hub.foodMenu.length > 0 && (
+                <div className="bg-[#0b1120] border border-slate-800 rounded-[30px] md:rounded-[50px] p-6 md:p-10 shadow-xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Refuel Station / Food Menu</h3>
+                  </div>
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                    {hub.foodMenu.map((photo, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => setActiveMenuPhoto(photo)}
+                        className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden border border-slate-800 hover:border-orange-500/50 transition-all hover:scale-105 active:scale-95 group"
+                      >
+                        <img src={photo} className="w-full h-full object-cover group-hover:brightness-125" alt="Menu Item" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {hub.type === 'TURF' && (
                 <div className="bg-[#0b1120] border border-slate-800 rounded-[30px] md:rounded-[50px] p-6 md:p-10 shadow-xl">
                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Squad Size (For Split Billing)</h3>
@@ -214,6 +236,19 @@ const HubDetailView: React.FC<HubDetailViewProps> = ({ hub, role, onBack, onLogo
           </aside>
         </div>
       </main>
+
+      {/* MENU FULL VIEW MODAL */}
+      {activeMenuPhoto && (
+        <div 
+          className="fixed inset-0 z-[1000] bg-[#020617]/95 backdrop-blur-3xl flex items-center justify-center p-6 cursor-zoom-out"
+          onClick={() => setActiveMenuPhoto(null)}
+        >
+          <div className="relative max-w-4xl w-full h-full flex items-center justify-center">
+             <img src={activeMenuPhoto} className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl animate-in zoom-in duration-300" alt="Menu Full View" />
+             <button className="absolute top-0 right-0 md:-top-12 md:-right-12 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white font-black">✕</button>
+          </div>
+        </div>
+      )}
 
       {showPaymentModal && (
         <div className="fixed inset-0 z-[500] bg-[#020617]/95 backdrop-blur-xl flex items-center justify-center p-4">

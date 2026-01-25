@@ -31,6 +31,7 @@ export interface Hub {
   lng?: number;
   rating: number;
   images: string[];
+  foodMenu?: string[]; // Added food menu images
   priceStart: number;
   description: string;
   amenities: string[];

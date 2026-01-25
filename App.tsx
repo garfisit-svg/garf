@@ -88,6 +88,7 @@ const App: React.FC = () => {
             contactPhone: h.contact_phone || '',
             contactEmail: h.contact_email || '',
             upiId: h.upi_id || '',
+            foodMenu: Array.isArray(h.food_menu) ? h.food_menu : [],
             slots: Array.isArray(h.slots) ? h.slots : [],
             accessories: Array.isArray(h.accessories) ? h.accessories : undefined
           })));
@@ -163,6 +164,7 @@ const App: React.FC = () => {
       price_start: Number(hubData.priceStart),
       description: hubData.description || "",
       images: hubData.images,
+      food_menu: hubData.foodMenu || [],
       contact_phone: hubData.contactPhone || "",
       contact_email: hubData.contactEmail || "",
       upi_id: hubData.upiId || "",
