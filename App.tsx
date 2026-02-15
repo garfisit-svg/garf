@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UserRole, Hub, Booking, ChatRoom, ChatMessage, Poll } from './types';
+import { UserRole, Hub, Booking, ChatRoom, ChatMessage, Poll, Review } from './types';
 import LandingView from './views/LandingView';
 import AuthView from './views/AuthView';
 import UserDashboard from './views/UserDashboard';
@@ -21,7 +21,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
   
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([
     { id: 'global', name: 'Global Arena Chat', description: 'Main communication hub for all players.', isGlobal: true, messages: [] }
@@ -89,6 +88,7 @@ const App: React.FC = () => {
             foodMenu: Array.isArray(h.food_menu) ? h.food_menu : [],
             slots: Array.isArray(h.slots) ? h.slots : [],
             categories: Array.isArray(h.categories) ? h.categories : [],
+            reviews: Array.isArray(h.reviews) ? h.reviews : [],
           })));
         }
 
@@ -121,10 +121,10 @@ const App: React.FC = () => {
   }, [view, refreshTrigger, sessionUser]);
 
   const handleSendMessage = (roomId: string, message: Partial<ChatMessage>) => {
-    if (!sessionUser) return;
+    if (!sessionUser && authType !== 'guest') return;
     const newMessage: ChatMessage = {
       id: 'msg-' + Math.random().toString(36).substr(2, 9),
-      senderId: sessionUser.id,
+      senderId: sessionUser?.id || 'guest',
       senderNickname: userNickname,
       timestamp: Date.now(),
       type: message.type || 'text',
@@ -172,6 +172,9 @@ const App: React.FC = () => {
   const handleJoinSquad = (code: string): Promise<string | null> => {
     const room = chatRooms.find(r => r.joinCode === code);
     if (room) {
+      if (!chatRooms.find(cr => cr.id === room.id)) {
+         setChatRooms(prev => [...prev, room]);
+      }
       handleSendMessage(room.id, { 
         type: 'system', 
         text: `Member ${userNickname} has established a tactical link to this frequency.`,
@@ -205,6 +208,23 @@ const App: React.FC = () => {
     }));
   };
 
+  const handlePostReview = async (hubId: string, review: Omit<Review, 'id' | 'date'>) => {
+    const newReview: Review = {
+      ...review,
+      id: 'rev-' + Date.now(),
+      date: new Date().toLocaleDateString()
+    };
+    
+    setHubs(prev => prev.map(h => {
+      if (h.id !== hubId) return h;
+      const reviews = [...(h.reviews || []), newReview];
+      const rating = reviews.reduce((a, b) => a + b.rating, 0) / reviews.length;
+      return { ...h, reviews, rating: Number(rating.toFixed(1)) };
+    }));
+
+    // In a real app, we would persist this to Supabase here.
+  };
+
   const handleSaveHub = async (hubData: Hub) => {
     if (!sessionUser) return;
     const payload: any = {
@@ -235,11 +255,7 @@ const App: React.FC = () => {
       setView('owner');
     } catch (err: any) {
       console.error("Deployment Failure:", err);
-      if (err.code === 'PGRST204') {
-        setError(`DATABASE ERROR: Column "categories" missing. Please run the SQL: ALTER TABLE hubs ADD COLUMN categories jsonb DEFAULT '[]'::jsonb;`);
-      } else {
-        setError(`Deployment failed: ${err.message}`);
-      }
+      setError(`Deployment failed: ${err.message}`);
     }
   };
 
@@ -278,7 +294,15 @@ const App: React.FC = () => {
         />
       )}
       {view === 'hub-detail' && selectedHub && (
-        <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={(d) => {}} allBookings={bookings} />
+        <HubDetailView 
+          hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} 
+          onBack={() => setView('user')} 
+          role={authType} 
+          onLogout={handleLogout} 
+          onBook={(d) => {}} 
+          onPostReview={handlePostReview}
+          allBookings={bookings} 
+        />
       )}
       {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={(id, s) => {}} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={() => {}} onToggleSoldOut={() => {}} onNavigateHome={() => setView('owner')} />}
       {view === 'hub-register' && <HubRegisterView onBack={() => setView('owner')} onLogout={handleLogout} onNavigateHome={() => setView('owner')} hubToEdit={editingHub || undefined} onSave={handleSaveHub} />}
