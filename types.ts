@@ -92,10 +92,11 @@ export interface Poll {
 
 export interface ChatMessage {
   id: string;
+  senderId: string;
   senderNickname: string;
   text?: string;
   timestamp: number;
-  type: 'text' | 'poll';
+  type: 'text' | 'poll' | 'system';
   poll?: Poll;
   isSystem?: boolean;
 }

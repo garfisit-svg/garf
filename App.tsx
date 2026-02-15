@@ -89,7 +89,6 @@ const App: React.FC = () => {
             foodMenu: Array.isArray(h.food_menu) ? h.food_menu : [],
             slots: Array.isArray(h.slots) ? h.slots : [],
             categories: Array.isArray(h.categories) ? h.categories : [],
-            accessories: Array.isArray(h.accessories) ? h.accessories : undefined
           })));
         }
 
@@ -121,40 +120,89 @@ const App: React.FC = () => {
     fetchData();
   }, [view, refreshTrigger, sessionUser]);
 
-  const handleBook = async (bookingData: any) => {
-    if (!sessionUser) {
-      alert("Please login to complete your reservation.");
-      return;
-    }
-
-    const payload = {
-      hub_id: bookingData.hubId,
-      hub_name: bookingData.hubName,
-      slot_time: bookingData.slotTime,
-      user_id: sessionUser.id,
-      user_name: userNickname,
-      base_price: bookingData.basePrice,
-      service_fee: bookingData.serviceFee,
-      total_price: bookingData.totalPrice,
-      player_count: Number(bookingData.playerCount) || 1,
-      payment_method: 'upi',
-      status: 'pending',
-      category_id: bookingData.categoryId,
-      category_name: bookingData.categoryName,
-      date: new Date().toLocaleDateString()
+  const handleSendMessage = (roomId: string, message: Partial<ChatMessage>) => {
+    if (!sessionUser) return;
+    const newMessage: ChatMessage = {
+      id: 'msg-' + Math.random().toString(36).substr(2, 9),
+      senderId: sessionUser.id,
+      senderNickname: userNickname,
+      timestamp: Date.now(),
+      type: message.type || 'text',
+      text: message.text,
+      poll: message.poll,
+      isSystem: message.isSystem || message.type === 'system'
     };
 
-    try {
-      const { error: bookingError } = await supabase.from('bookings').insert([payload]);
-      if (bookingError) throw bookingError;
-      
-      setRefreshTrigger(p => p + 1);
-      setView('user');
-      alert("RESERVATION SECURED: Check your history for verification status.");
-    } catch (err: any) {
-      console.error("Booking failed:", err);
-      alert(`BOOKING FAILED: ${err.message}. Please ensure your bookings table has category_id and category_name columns.`);
+    setChatRooms(prev => prev.map(room => {
+      if (room.id !== roomId) return room;
+      return { ...room, messages: [...room.messages, newMessage] };
+    }));
+  };
+
+  const handleDeleteMessage = (roomId: string, messageId: string) => {
+    setChatRooms(prev => prev.map(room => {
+      if (room.id !== roomId) return room;
+      return { ...room, messages: room.messages.filter(m => m.id !== messageId) };
+    }));
+  };
+
+  const handleCreateSquad = (name: string): Promise<string> => {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const newRoomId = 'squad-' + Date.now();
+    const newRoom: ChatRoom = {
+      id: newRoomId,
+      name: name,
+      description: `Tactical squad frequency. Join Code: ${code}`,
+      isGlobal: false,
+      joinCode: code,
+      messages: [{
+        id: 'sys-' + Date.now(),
+        senderId: 'system',
+        senderNickname: 'GARF SYSTEM',
+        text: `Frequency established. Share code [ ${code} ] to invite your squad members. Welcome, ${userNickname}.`,
+        timestamp: Date.now(),
+        type: 'system',
+        isSystem: true
+      }]
+    };
+    setChatRooms(prev => [...prev, newRoom]);
+    return Promise.resolve(newRoomId);
+  };
+
+  const handleJoinSquad = (code: string): Promise<string | null> => {
+    const room = chatRooms.find(r => r.joinCode === code);
+    if (room) {
+      handleSendMessage(room.id, { 
+        type: 'system', 
+        text: `Member ${userNickname} has established a tactical link to this frequency.`,
+        isSystem: true 
+      });
+      return Promise.resolve(room.id);
     }
+    return Promise.resolve(null);
+  };
+
+  const handleVotePoll = (roomId: string, messageId: string, optionIndex: number) => {
+    if (!sessionUser) return;
+    setChatRooms(prev => prev.map(room => {
+      if (room.id !== roomId) return room;
+      return {
+        ...room,
+        messages: room.messages.map(msg => {
+          if (msg.id !== messageId || !msg.poll) return msg;
+          const updatedOptions = msg.poll.options.map((opt, i) => {
+            if (i !== optionIndex) {
+              return { ...opt, votes: opt.votes.filter(v => v !== sessionUser.id) };
+            }
+            return {
+              ...opt,
+              votes: opt.votes.includes(sessionUser.id) ? opt.votes : [...opt.votes, sessionUser.id]
+            };
+          });
+          return { ...msg, poll: { ...msg.poll, options: updatedOptions } };
+        })
+      };
+    }));
   };
 
   const handleSaveHub = async (hubData: Hub) => {
@@ -187,59 +235,52 @@ const App: React.FC = () => {
       setView('owner');
     } catch (err: any) {
       console.error("Deployment Failure:", err);
-      setError(`Deployment failed: ${err.message}. Ensure the "categories" and "food_menu" columns exist in your "hubs" table.`);
-    }
-  };
-
-  const handleDeleteHub = async (id: string) => {
-    setIsDeleting(true);
-    try {
-      const { data, error } = await supabase.from('hubs').delete().eq('id', id).select();
-      if (error) throw error;
-      setRefreshTrigger(p => p + 1);
-      setError(null);
-    } catch (err: any) {
-      setError(`Critical Error: ${err.message}`);
-    } finally {
-      setIsDeleting(false);
+      if (err.code === 'PGRST204') {
+        setError(`DATABASE ERROR: Column "categories" missing. Please run the SQL: ALTER TABLE hubs ADD COLUMN categories jsonb DEFAULT '[]'::jsonb;`);
+      } else {
+        setError(`Deployment failed: ${err.message}`);
+      }
     }
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setHubs([]);
-    setBookings([]);
     setView('landing');
   };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 font-sans">
       {error && (
-        <div className="fixed bottom-10 right-10 z-[1000] bg-red-600 text-white p-6 rounded-2xl shadow-2xl max-w-md">
-          <h4 className="font-black uppercase text-xs mb-2">Operation Error</h4>
+        <div className="fixed bottom-10 right-10 z-[1000] bg-red-600 text-white p-6 rounded-2xl shadow-2xl max-w-md border border-red-400">
+          <h4 className="font-black uppercase text-xs mb-2">Protocol Error</h4>
           <p className="text-xs font-bold leading-relaxed">{error}</p>
           <button onClick={() => setError(null)} className="mt-4 bg-white/20 hover:bg-white/40 px-4 py-2 rounded-xl text-[10px] font-black uppercase">Dismiss</button>
-        </div>
-      )}
-
-      {isDeleting && (
-        <div className="fixed inset-0 z-[2000] bg-[#020617]/80 backdrop-blur-md flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-            <p className="text-sm font-black text-white uppercase tracking-[0.3em]">Processing...</p>
-          </div>
         </div>
       )}
 
       {view === 'landing' && <LandingView onStartAuth={(role) => { setAuthType(role); setView('auth'); }} onBrowseGuest={() => { setAuthType('guest'); setView('user'); }} />}
       {view === 'auth' && <AuthView type={authType} onBack={() => setView('landing')} onSuccess={(nk) => { if(nk) setUserNickname(nk); }} />}
       {view === 'user' && (
-        <UserDashboard hubs={hubs} nickname={userNickname} bookings={bookings} chatRooms={chatRooms} onLogout={handleLogout} onHubSelect={(h) => { setSelectedHub(h); setView('hub-detail'); }} onNavigateHome={() => setView('user')} onSendMessage={() => {}} onVotePoll={() => {}} onCreateSquad={() => Promise.resolve('0')} onJoinSquad={() => Promise.resolve(null)} />
+        <UserDashboard 
+          hubs={hubs} 
+          nickname={userNickname} 
+          currentUserId={sessionUser?.id}
+          bookings={bookings} 
+          chatRooms={chatRooms} 
+          onLogout={handleLogout} 
+          onHubSelect={(h) => { setSelectedHub(h); setView('hub-detail'); }} 
+          onNavigateHome={() => setView('user')} 
+          onSendMessage={handleSendMessage}
+          onDeleteMessage={handleDeleteMessage}
+          onVotePoll={handleVotePoll} 
+          onCreateSquad={handleCreateSquad} 
+          onJoinSquad={handleJoinSquad} 
+        />
       )}
       {view === 'hub-detail' && selectedHub && (
-        <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={handleBook} onPostReview={() => {}} allBookings={bookings} />
+        <HubDetailView hub={hubs.find(h => h.id === selectedHub.id) || selectedHub} onBack={() => setView('user')} role={authType} onLogout={handleLogout} onBook={(d) => {}} allBookings={bookings} />
       )}
-      {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={async (id, status) => { await supabase.from('bookings').update({ status }).eq('id', id); setRefreshTrigger(p => p + 1); }} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={handleDeleteHub} onToggleSoldOut={async (id) => { const h = hubs.find(h => h.id === id); if(h) await supabase.from('hubs').update({ is_sold_out: !h.isSoldOut }).eq('id', id); setRefreshTrigger(p => p + 1); }} onNavigateHome={() => setView('owner')} />}
+      {view === 'owner' && <OwnerDashboard hubs={hubs} sessionUser={sessionUser} bookings={bookings} onUpdateBookingStatus={(id, s) => {}} onLogout={handleLogout} onAddHub={() => { setEditingHub(null); setView('hub-register'); }} onEditHub={(h) => { setEditingHub(h); setView('hub-register'); }} onDeleteHub={() => {}} onToggleSoldOut={() => {}} onNavigateHome={() => setView('owner')} />}
       {view === 'hub-register' && <HubRegisterView onBack={() => setView('owner')} onLogout={handleLogout} onNavigateHome={() => setView('owner')} hubToEdit={editingHub || undefined} onSave={handleSaveHub} />}
     </div>
   );
